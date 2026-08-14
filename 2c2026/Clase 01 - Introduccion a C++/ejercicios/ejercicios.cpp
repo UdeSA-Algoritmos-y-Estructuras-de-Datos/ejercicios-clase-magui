@@ -143,24 +143,25 @@ double Punto::distanciaA(const Punto &otro) const
 Rectangulo::Rectangulo(double baseInicial, double alturaInicial)
 {
     // TODO: inicializar base y altura con los valores recibidos.
-    (void)baseInicial;
-    (void)alturaInicial;
+    base = baseInicial;
+    altura = alturaInicial;
 }
 
 double Rectangulo::area() const
 {
     // TODO: devolver el área del rectángulo (base * altura).
-    return 0.0;
+    return base * altura;
 }
 
 double Rectangulo::perimetro() const
 {
     // TODO: devolver el perímetro del rectángulo (2 * (base + altura)).
-    return 0.0;
+    return (2 * altura) + (2 * base);
 }
 
 bool Rectangulo::esCuadrado() const
 {
     // TODO: devolver true si el rectángulo es un cuadrado (base == altura).
+    if (base == altura) {return true;}
     return false;
 }
