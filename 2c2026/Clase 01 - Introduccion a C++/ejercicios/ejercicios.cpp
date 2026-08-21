@@ -4,6 +4,7 @@
 // ============================================================================
 
 #include "ejercicios.h"
+#include <cmath>
 
 // ============================================================================
 // Acá va TU código. Cada función tiene una cáscara con un "TODO": borrá el
@@ -122,21 +123,24 @@ int contarPalabras(const std::string &oracion) {
 Punto::Punto(double xInicial, double yInicial)
 {
     // TODO: inicializar x e y con los valores recibidos.
-    (void)xInicial;
-    (void)yInicial;
+    x = xInicial;
+    y = yInicial;
 }
 
 double Punto::distanciaAlOrigen() const
 {
     // TODO: devolver la distancia entre este punto y el origen (0, 0).
-    return 0.0;
+    return sqrt((x*x) + (y*y));
 }
 
 double Punto::distanciaA(const Punto &otro) const
 {
     // TODO: devolver la distancia entre este punto y "otro".
-    (void)otro;
-    return 0.0;
+    double otroX = otro.x;
+    double otroY = otro.y;
+    double xFinal = x - otroX;
+    double yFinal = y - otroY;
+    return sqrt((xFinal*xFinal) + (yFinal*yFinal));
 }
 
 // Ejercicio 11 — Clase Rectangulo
