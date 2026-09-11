@@ -57,49 +57,47 @@ Merge sort aplica Divide & Conquer directamente:
 2. **Conquistar**: ordenar recursivamente cada mitad.
 3. **Combinar**: mezclar (`merge`) las dos mitades ya ordenadas en un único vector ordenado.
 
-```cpp
-template <typename T>
-void mergeSort(std::vector<T>& v, int izq, int der) {
-    if (izq >= der) return;  // caso base: 0 o 1 elemento
+```
+función mergeSort(v, izq, der):
+    si izq >= der:
+        devolver                       // caso base: 0 o 1 elemento
 
-    int medio = izq + (der - izq) / 2;
+    medio ← izq + (der - izq) / 2
 
-    mergeSort(v, izq, medio);       // ordeno mitad izquierda
-    mergeSort(v, medio + 1, der);   // ordeno mitad derecha
-    merge(v, izq, medio, der);      // combino ambas mitades
-}
+    mergeSort(v, izq, medio)           // ordeno mitad izquierda
+    mergeSort(v, medio + 1, der)       // ordeno mitad derecha
+    merge(v, izq, medio, der)          // combino ambas mitades
 ```
 
 ### La función merge
 
 `merge` recibe dos sub-rangos **ya ordenados** (`[izq, medio]` y `[medio+1, der]`) y los combina en un único rango ordenado, usando un vector auxiliar.
 
-```cpp
-template <typename T>
-void merge(std::vector<T>& v, int izq, int medio, int der) {
-    std::vector<T> aux;
-    aux.reserve(der - izq + 1);
+```
+función merge(v, izq, medio, der):
+    aux ← arreglo vacío
 
-    int i = izq;       // puntero a la mitad izquierda
-    int j = medio + 1;  // puntero a la mitad derecha
+    i ← izq             // puntero a la mitad izquierda
+    j ← medio + 1        // puntero a la mitad derecha
 
-    while (i <= medio && j <= der) {
-        if (v[i] <= v[j]) {
-            aux.push_back(v[i]);
-            i++;
-        } else {
-            aux.push_back(v[j]);
-            j++;
-        }
-    }
+    mientras i <= medio y j <= der:
+        si v[i] <= v[j]:
+            agregar v[i] al final de aux
+            i ← i + 1
+        si no:
+            agregar v[j] al final de aux
+            j ← j + 1
 
-    while (i <= medio) aux.push_back(v[i++]);
-    while (j <= der)   aux.push_back(v[j++]);
+    mientras i <= medio:
+        agregar v[i] al final de aux
+        i ← i + 1
 
-    for (int k = 0; k < (int)aux.size(); k++) {
-        v[izq + k] = aux[k];
-    }
-}
+    mientras j <= der:
+        agregar v[j] al final de aux
+        j ← j + 1
+
+    para k desde 0 hasta longitud(aux) - 1:
+        v[izq + k] ← aux[k]
 ```
 
 > El uso de `<=` (y no `<`) en la comparación `v[i] <= v[j]` es lo que hace que merge sort sea **estable**: ante un empate, siempre se prioriza el elemento de la mitad izquierda, que apareció antes en el vector original.
@@ -118,38 +116,33 @@ Quick sort también es Divide & Conquer, pero divide el trabajo de otra manera:
 2. **Conquistar**: ordenar recursivamente la parte izquierda y la parte derecha del pivot.
 3. **Combinar**: ¡no hace falta combinar nada! Una vez ordenadas ambas partes, el vector completo ya está ordenado.
 
-```cpp
-template <typename T>
-void quickSort(std::vector<T>& v, int izq, int der) {
-    if (izq >= der) return;  // caso base: 0 o 1 elemento
+```
+función quickSort(v, izq, der):
+    si izq >= der:
+        devolver                       // caso base: 0 o 1 elemento
 
-    int p = partition(v, izq, der);
+    p ← partition(v, izq, der)
 
-    quickSort(v, izq, p - 1);
-    quickSort(v, p + 1, der);
-}
+    quickSort(v, izq, p - 1)
+    quickSort(v, p + 1, der)
 ```
 
 ### Partición (partition)
 
 Usamos el esquema de **Lomuto**, que elige como pivot el último elemento del rango:
 
-```cpp
-template <typename T>
-int partition(std::vector<T>& v, int izq, int der) {
-    T pivot = v[der];
-    int i = izq - 1;  // límite de la zona "menor al pivot"
+```
+función partition(v, izq, der):
+    pivot ← v[der]
+    i ← izq - 1               // límite de la zona "menor al pivot"
 
-    for (int j = izq; j < der; j++) {
-        if (v[j] < pivot) {
-            i++;
-            std::swap(v[i], v[j]);
-        }
-    }
+    para j desde izq hasta der - 1:
+        si v[j] < pivot:
+            i ← i + 1
+            intercambiar v[i] y v[j]
 
-    std::swap(v[i + 1], v[der]);
-    return i + 1;  // posición final del pivot
-}
+    intercambiar v[i + 1] y v[der]
+    devolver i + 1             // posición final del pivot
 ```
 
 > Pregunta para pensar: ¿por qué quick sort **no es estable** en general? Pensá qué pasa con dos elementos iguales cuando uno de ellos termina siendo swapeado con el pivot.
