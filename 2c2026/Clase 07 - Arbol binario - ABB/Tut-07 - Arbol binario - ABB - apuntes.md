@@ -8,7 +8,7 @@ Tutorial 7 – Árbol binario - ABB
 - [Objetivos de la clase](#objetivos-de-la-clase)
 - [Árboles binarios](#árboles-binarios)
   - [¿Qué es un árbol binario?](#qué-es-un-árbol-binario)
-  - [Representación en C++](#representación-en-c)
+  - [Representación](#representación)
   - [Recorridos de árboles binarios](#recorridos-de-árboles-binarios)
     - [Preorder](#preorder)
     - [Inorder](#inorder)
@@ -59,29 +59,25 @@ Terminología básica:
 
 > Un árbol binario es una estructura recursiva: un árbol es o bien vacío, o bien un nodo con dos subárboles (izquierdo y derecho), que a su vez son árboles binarios.
 
-## Representación en C++
+## Representación
 
 La representación más común usa punteros:
 
-```cpp
-template <typename T>
-struct NodoAB {
-    T valor;
-    NodoAB<T>* izq;
-    NodoAB<T>* der;
-
-    NodoAB(T v) : valor(v), izq(nullptr), der(nullptr) {}
-};
+```
+tipo NodoAB:
+    valor
+    izq: NodoAB  // puntero al hijo izquierdo
+    der: NodoAB  // puntero al hijo derecho
 ```
 
 Crear un árbol manualmente:
 
-```cpp
-NodoAB<int>* raiz = new NodoAB<int>(10);
-raiz->izq = new NodoAB<int>(5);
-raiz->der = new NodoAB<int>(15);
-raiz->izq->izq = new NodoAB<int>(3);
-raiz->izq->der = new NodoAB<int>(7);
+```
+raiz ← nuevo NodoAB(10)
+raiz.izq ← nuevo NodoAB(5)
+raiz.der ← nuevo NodoAB(15)
+raiz.izq.izq ← nuevo NodoAB(3)
+raiz.izq.der ← nuevo NodoAB(7)
 ```
 
 > A diferencia de un vector o una lista, el árbol binario no tiene un "orden lineal" natural: hay múltiples formas de recorrerlo, y cada una tiene sus aplicaciones.
@@ -94,14 +90,14 @@ Los tres recorridos clásicos difieren en **cuándo se visita el nodo actual** r
 
 Visita el nodo **antes** de sus hijos: **raíz → izquierdo → derecho**.
 
-```cpp
-void preorder(NodoAB<int>* nodo) {
-    if (nodo == nullptr) return;
+```
+procedimiento preorder(nodo):
+    si nodo = nulo:
+        retornar
 
-    std::cout << nodo->valor << " ";  // visito primero
-    preorder(nodo->izq);
-    preorder(nodo->der);
-}
+    imprimir(nodo.valor)  // visito primero
+    preorder(nodo.izq)
+    preorder(nodo.der)
 ```
 
 Útil para: copiar un árbol, serializar su estructura.
@@ -110,14 +106,14 @@ void preorder(NodoAB<int>* nodo) {
 
 Visita el nodo **entre** sus hijos: **izquierdo → raíz → derecho**.
 
-```cpp
-void inorder(NodoAB<int>* nodo) {
-    if (nodo == nullptr) return;
+```
+procedimiento inorder(nodo):
+    si nodo = nulo:
+        retornar
 
-    inorder(nodo->izq);
-    std::cout << nodo->valor << " ";  // visito en el medio
-    inorder(nodo->der);
-}
+    inorder(nodo.izq)
+    imprimir(nodo.valor)  // visito en el medio
+    inorder(nodo.der)
 ```
 
 Útil para: en un ABB, recorrer los elementos **en orden creciente**.
@@ -126,14 +122,14 @@ void inorder(NodoAB<int>* nodo) {
 
 Visita el nodo **después** de sus hijos: **izquierdo → derecho → raíz**.
 
-```cpp
-void postorder(NodoAB<int>* nodo) {
-    if (nodo == nullptr) return;
+```
+procedimiento postorder(nodo):
+    si nodo = nulo:
+        retornar
 
-    postorder(nodo->izq);
-    postorder(nodo->der);
-    std::cout << nodo->valor << " ";  // visito al final
-}
+    postorder(nodo.izq)
+    postorder(nodo.der)
+    imprimir(nodo.valor)  // visito al final
 ```
 
 Útil para: liberar memoria (hay que eliminar los hijos antes que el padre), evaluar expresiones.
@@ -142,16 +138,16 @@ void postorder(NodoAB<int>* nodo) {
 
 ## Altura y tamaño
 
-```cpp
-int altura(NodoAB<int>* nodo) {
-    if (nodo == nullptr) return 0;
-    return 1 + std::max(altura(nodo->izq), altura(nodo->der));
-}
+```
+función altura(nodo) → entero:
+    si nodo = nulo:
+        retornar 0
+    retornar 1 + máximo(altura(nodo.izq), altura(nodo.der))
 
-int tamaño(NodoAB<int>* nodo) {
-    if (nodo == nullptr) return 0;
-    return 1 + tamaño(nodo->izq) + tamaño(nodo->der);
-}
+función tamaño(nodo) → entero:
+    si nodo = nulo:
+        retornar 0
+    retornar 1 + tamaño(nodo.izq) + tamaño(nodo.der)
 ```
 
 > Estas funciones muestran el patrón típico de recursión sobre árboles: caso base (nodo nulo) y caso recursivo (combinar resultados de los subárboles).
@@ -191,54 +187,47 @@ Para buscar un valor, comparamos con el nodo actual:
 - Si es menor, buscamos en el subárbol izquierdo.
 - Si es mayor, buscamos en el subárbol derecho.
 
-```cpp
-NodoAB<int>* buscar(NodoAB<int>* nodo, int valor) {
-    if (nodo == nullptr) return nullptr;  // no está
+```
+función buscar(nodo, valor) → NodoAB:
+    si nodo = nulo:
+        retornar nulo  // no está
 
-    if (valor == nodo->valor) {
-        return nodo;  // encontrado
-    } else if (valor < nodo->valor) {
-        return buscar(nodo->izq, valor);
-    } else {
-        return buscar(nodo->der, valor);
-    }
-}
+    si valor = nodo.valor:
+        retornar nodo  // encontrado
+    sino si valor < nodo.valor:
+        retornar buscar(nodo.izq, valor)
+    sino:
+        retornar buscar(nodo.der, valor)
 ```
 
 Versión iterativa:
 
-```cpp
-NodoAB<int>* buscarIterativo(NodoAB<int>* nodo, int valor) {
-    while (nodo != nullptr && nodo->valor != valor) {
-        if (valor < nodo->valor) {
-            nodo = nodo->izq;
-        } else {
-            nodo = nodo->der;
-        }
-    }
-    return nodo;
-}
+```
+función buscarIterativo(nodo, valor) → NodoAB:
+    mientras nodo ≠ nulo y nodo.valor ≠ valor:
+        si valor < nodo.valor:
+            nodo ← nodo.izq
+        sino:
+            nodo ← nodo.der
+    retornar nodo
 ```
 
 ### Inserción
 
 Para insertar, buscamos dónde debería estar el valor y lo agregamos como hoja:
 
-```cpp
-NodoAB<int>* insertar(NodoAB<int>* nodo, int valor) {
-    if (nodo == nullptr) {
-        return new NodoAB<int>(valor);
-    }
+```
+función insertar(nodo, valor) → NodoAB:
+    si nodo = nulo:
+        retornar nuevo NodoAB(valor)
 
-    if (valor < nodo->valor) {
-        nodo->izq = insertar(nodo->izq, valor);
-    } else if (valor > nodo->valor) {
-        nodo->der = insertar(nodo->der, valor);
-    }
-    // si valor == nodo->valor, no hacemos nada (no permitimos duplicados)
+    si valor < nodo.valor:
+        nodo.izq ← insertar(nodo.izq, valor)
+    sino si valor > nodo.valor:
+        nodo.der ← insertar(nodo.der, valor)
+    // si valor = nodo.valor, no hacemos nada (no permitimos duplicados)
 
-    return nodo;
-}
+    retornar nodo
 ```
 
 > La inserción siempre agrega una nueva hoja; nunca reorganiza el árbol existente. Esto es simple pero puede llevar a desbalanceo.
@@ -247,20 +236,16 @@ NodoAB<int>* insertar(NodoAB<int>* nodo, int valor) {
 
 El mínimo está en el nodo más a la izquierda; el máximo en el más a la derecha:
 
-```cpp
-NodoAB<int>* minimo(NodoAB<int>* nodo) {
-    while (nodo->izq != nullptr) {
-        nodo = nodo->izq;
-    }
-    return nodo;
-}
+```
+función minimo(nodo) → NodoAB:
+    mientras nodo.izq ≠ nulo:
+        nodo ← nodo.izq
+    retornar nodo
 
-NodoAB<int>* maximo(NodoAB<int>* nodo) {
-    while (nodo->der != nullptr) {
-        nodo = nodo->der;
-    }
-    return nodo;
-}
+función maximo(nodo) → NodoAB:
+    mientras nodo.der ≠ nulo:
+        nodo ← nodo.der
+    retornar nodo
 ```
 
 ### Eliminación
@@ -271,37 +256,36 @@ La eliminación es la operación más compleja. Hay tres casos:
 2. **El nodo tiene un solo hijo**: lo reemplazamos por su hijo.
 3. **El nodo tiene dos hijos**: lo reemplazamos por su **sucesor inorder** (el mínimo del subárbol derecho) o su **predecesor inorder** (el máximo del subárbol izquierdo).
 
-```cpp
-NodoAB<int>* eliminar(NodoAB<int>* nodo, int valor) {
-    if (nodo == nullptr) return nullptr;
+```
+función eliminar(nodo, valor) → NodoAB:
+    si nodo = nulo:
+        retornar nulo
 
-    if (valor < nodo->valor) {
-        nodo->izq = eliminar(nodo->izq, valor);
-    } else if (valor > nodo->valor) {
-        nodo->der = eliminar(nodo->der, valor);
-    } else {
+    si valor < nodo.valor:
+        nodo.izq ← eliminar(nodo.izq, valor)
+    sino si valor > nodo.valor:
+        nodo.der ← eliminar(nodo.der, valor)
+    sino:
         // Encontramos el nodo a eliminar
 
         // Caso 1 y 2: tiene 0 o 1 hijo
-        if (nodo->izq == nullptr) {
-            NodoAB<int>* temp = nodo->der;
-            delete nodo;
-            return temp;
-        }
-        if (nodo->der == nullptr) {
-            NodoAB<int>* temp = nodo->izq;
-            delete nodo;
-            return temp;
-        }
+        si nodo.izq = nulo:
+            temp ← nodo.der
+            liberar nodo
+            retornar temp
+
+        si nodo.der = nulo:
+            temp ← nodo.izq
+            liberar nodo
+            retornar temp
 
         // Caso 3: tiene dos hijos
         // Buscamos el sucesor inorder (mínimo del subárbol derecho)
-        NodoAB<int>* sucesor = minimo(nodo->der);
-        nodo->valor = sucesor->valor;  // copiamos el valor
-        nodo->der = eliminar(nodo->der, sucesor->valor);  // eliminamos el sucesor
-    }
-    return nodo;
-}
+        sucesor ← minimo(nodo.der)
+        nodo.valor ← sucesor.valor  // copiamos el valor
+        nodo.der ← eliminar(nodo.der, sucesor.valor)  // eliminamos el sucesor
+
+    retornar nodo
 ```
 
 > Pregunta para pensar: ¿por qué elegimos el sucesor inorder y no cualquier otro nodo? ¿Qué pasaría con el invariante del ABB si eligiéramos otro?
