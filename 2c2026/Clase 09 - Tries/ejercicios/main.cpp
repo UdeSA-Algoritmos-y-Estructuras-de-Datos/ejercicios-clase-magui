@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ejercicios.h"
@@ -14,9 +15,9 @@
 // Al principio va a fallar casi todo (las funciones son cáscaras vacías).
 // A medida que las vayas implementando en "ejercicios.cpp", van a ir pasando.
 //
-// Las pruebas NO usan tus funciones para inspeccionar el trie (usan los
-// helpers de abajo, que recorren los nodos a mano), así que un error en una
-// función no hace fallar las pruebas de las demás.
+// Las pruebas NO usan tus funciones para armar ni inspeccionar el trie (usan
+// los helpers de abajo, que trabajan sobre los nodos a mano), así que un
+// error en una función no hace fallar las pruebas de las demás.
 // ============================================================================
 
 static int totalPruebas = 0;
@@ -40,54 +41,88 @@ static void chequear(const std::string& nombre, bool condicion)
 // Helpers
 // ----------------------------------------------------------------------------
 
+using ClaveValor = std::pair<std::string, int>;
+
 // Arma un trie directamente con `new`, sin usar tu insertar. Sirve para
 // probar las demás funciones aunque insertar todavía no esté hecho.
-static void cargarAMano(Trie& trie, const std::vector<std::string>& palabras)
+static void cargarConValores(Trie& trie, const std::vector<ClaveValor>& claves)
 {
-    for (const std::string& p : palabras) {
+    for (const ClaveValor& cv : claves) {
         NodoTrie* nodo = trie.raiz;
-        for (char c : p) {
-            if (nodo->hijos.find(c) == nodo->hijos.end()) {
-                nodo->hijos[c] = new NodoTrie();
+        for (char c : cv.first) {
+            if (nodo->hijos[indice(c)] == nullptr) {
+                nodo->hijos[indice(c)] = new NodoTrie();
             }
-            nodo = nodo->hijos[c];
+            nodo = nodo->hijos[indice(c)];
         }
-        if (!nodo->esFinal) {
-            nodo->esFinal = true;
+        if (!nodo->hayClave) {
+            nodo->hayClave = true;
             trie.cantidad++;
         }
+        nodo->valor = cv.second;
     }
 }
 
+// Igual que cargarConValores, pero todas las claves con valor 0.
+static void cargarAMano(Trie& trie, const std::vector<std::string>& claves)
+{
+    std::vector<ClaveValor> conValor;
+    for (const std::string& c : claves) {
+        conValor.push_back({c, 0});
+    }
+    cargarConValores(trie, conValor);
+}
+
 // Nodo al que se llega siguiendo `camino` desde la raíz (nullptr si se corta).
-static NodoTrie* nodoDe(const Trie& trie, const std::string& camino)
+static NodoTrie* caminar(const Trie& trie, const std::string& camino)
 {
     NodoTrie* nodo = trie.raiz;
     for (char c : camino) {
-        auto it = nodo->hijos.find(c);
-        if (it == nodo->hijos.end()) return nullptr;
-        nodo = it->second;
+        nodo = nodo->hijos[indice(c)];
+        if (nodo == nullptr) return nullptr;
     }
     return nodo;
+}
+
+// Chequeos a prueba de nullptr (así una función sin implementar hace FALLAR
+// la prueba en vez de romper el programa).
+static bool esClaveConValor(const Trie& trie, const std::string& camino, int valor)
+{
+    NodoTrie* nodo = caminar(trie, camino);
+    return nodo != nullptr && nodo->hayClave && nodo->valor == valor;
+}
+
+static bool esPrefijoSinClave(const Trie& trie, const std::string& camino)
+{
+    NodoTrie* nodo = caminar(trie, camino);
+    return nodo != nullptr && !nodo->hayClave;
+}
+
+static int cantidadHijos(const NodoTrie* nodo)
+{
+    int total = 0;
+    for (const NodoTrie* hijo : nodo->hijos) {
+        if (hijo != nullptr) total++;
+    }
+    return total;
 }
 
 // Cantidad real de nodos (incluida la raíz), contada a mano.
 static int nodosReales(const NodoTrie* nodo)
 {
     int total = 1;
-    for (const auto& par : nodo->hijos) {
-        total += nodosReales(par.second);
+    for (const NodoTrie* hijo : nodo->hijos) {
+        if (hijo != nullptr) total += nodosReales(hijo);
     }
     return total;
 }
 
-// Chequea que no queden "ramas muertas": todo nodo que no sea la raíz debe
-// ser final o tener hijos.
+// Chequea el invariante: ninguna hoja sin clave, salvo la raíz.
 static bool sinRamasMuertas(const NodoTrie* nodo, bool esRaiz)
 {
-    if (!esRaiz && nodo->hijos.empty() && !nodo->esFinal) return false;
-    for (const auto& par : nodo->hijos) {
-        if (!sinRamasMuertas(par.second, false)) return false;
+    if (!esRaiz && cantidadHijos(nodo) == 0 && !nodo->hayClave) return false;
+    for (const NodoTrie* hijo : nodo->hijos) {
+        if (hijo != nullptr && !sinRamasMuertas(hijo, false)) return false;
     }
     return true;
 }
@@ -165,277 +200,347 @@ int main()
     // ========================================================================
     {
         Trie trie;
-        insertar(trie, "casa");
-        insertar(trie, "caso");
-        insertar(trie, "cosa");
+        insertar(trie, "casa", 1);
+        insertar(trie, "caso", 2);
+        insertar(trie, "cosa", 3);
         chequear("Ej1 - insertar (cantidad)", trie.cantidad == 3);
         chequear("Ej1 - insertar (la raíz tiene un solo hijo: 'c')",
-                 trie.raiz->hijos.size() == 1 && trie.raiz->hijos.count('c') == 1);
-        NodoTrie* c = nodoDe(trie, "c");
+                 cantidadHijos(trie.raiz) == 1 && trie.raiz->hijos[indice('c')] != nullptr);
+        NodoTrie* c = caminar(trie, "c");
         chequear("Ej1 - insertar (comparten prefijo: 'c' tiene hijos 'a' y 'o')",
-                 c != nullptr && c->hijos.size() == 2);
-        NodoTrie* casa = nodoDe(trie, "casa");
-        chequear("Ej1 - insertar (marca el final de la palabra)", casa != nullptr && casa->esFinal);
+                 c != nullptr && cantidadHijos(c) == 2);
+        NodoTrie* casa = caminar(trie, "casa");
+        chequear("Ej1 - insertar (marca hayClave y guarda el valor)",
+                 casa != nullptr && casa->hayClave && casa->valor == 1);
+        NodoTrie* cosa = caminar(trie, "cosa");
+        chequear("Ej1 - insertar (valor de otra clave)", cosa != nullptr && cosa->hayClave && cosa->valor == 3);
+        NodoTrie* cas = caminar(trie, "cas");
+        chequear("Ej1 - insertar (un prefijo no es clave)", cas != nullptr && !cas->hayClave);
+
+        insertar(trie, "casa", 10);
+        chequear("Ej1 - insertar (clave repetida reemplaza el valor)",
+                 esClaveConValor(trie, "casa", 10));
+        chequear("Ej1 - insertar (clave repetida no cambia la cantidad)", trie.cantidad == 3);
+        chequear("Ej1 - insertar (clave repetida no crea nodos)", nodosReales(trie.raiz) == 9);
+
+        insertar(trie, "cas", 4);
+        chequear("Ej1 - insertar (clave que es prefijo de otra: cantidad)", trie.cantidad == 4);
+        cas = caminar(trie, "cas");
+        chequear("Ej1 - insertar (clave que es prefijo de otra: marca y valor)",
+                 cas != nullptr && cas->hayClave && cas->valor == 4 && nodosReales(trie.raiz) == 9);
+    }
+
+    // ========================================================================
+    // Ejercicio 2 — nodoDe
+    // ========================================================================
+    {
+        Trie trie;
+        cargarAMano(trie, {"casa", "caso", "cosa"});
+        chequear("Ej2 - nodoDe (clave completa)",
+                 nodoDe(trie, "casa") != nullptr && nodoDe(trie, "casa") == caminar(trie, "casa"));
         NodoTrie* cas = nodoDe(trie, "cas");
-        chequear("Ej1 - insertar (un prefijo no es final)", cas != nullptr && !cas->esFinal);
-
-        insertar(trie, "casa");
-        chequear("Ej1 - insertar (palabra repetida no cambia la cantidad)", trie.cantidad == 3);
-        chequear("Ej1 - insertar (palabra repetida no crea nodos)", nodosReales(trie.raiz) == 9);
-
-        insertar(trie, "cas");
-        chequear("Ej1 - insertar (palabra que es prefijo de otra: cantidad)", trie.cantidad == 4);
-        cas = nodoDe(trie, "cas");
-        chequear("Ej1 - insertar (palabra que es prefijo de otra: marca final)",
-                 cas != nullptr && cas->esFinal && nodosReales(trie.raiz) == 9);
+        chequear("Ej2 - nodoDe (un prefijo existe pero no es clave)", cas != nullptr && !cas->hayClave);
+        chequear("Ej2 - nodoDe (más larga que la clave)", nodoDe(trie, "casas") == nullptr);
+        chequear("Ej2 - nodoDe (camino que se corta)", nodoDe(trie, "cu") == nullptr);
+        chequear("Ej2 - nodoDe (letra que no está)", nodoDe(trie, "x") == nullptr);
+        chequear("Ej2 - nodoDe (clave vacía: la raíz)", nodoDe(trie, "") == trie.raiz);
     }
 
     // ========================================================================
-    // Ejercicio 2 — contiene
+    // Ejercicio 3 — pertenece
     // ========================================================================
     {
         Trie trie;
         cargarAMano(trie, {"casa", "caso", "cosa"});
-        chequear("Ej2 - contiene (palabra guardada)", contiene(trie, "casa") && contiene(trie, "cosa"));
-        chequear("Ej2 - contiene (un prefijo NO es una palabra)", !contiene(trie, "cas"));
-        chequear("Ej2 - contiene (palabra más larga que una guardada)", !contiene(trie, "casas"));
-        chequear("Ej2 - contiene (camino que no existe)", !contiene(trie, "perro"));
-        chequear("Ej2 - contiene (palabra vacía)", !contiene(trie, ""));
+        chequear("Ej3 - pertenece (clave guardada)", pertenece(trie, "casa") && pertenece(trie, "cosa"));
+        chequear("Ej3 - pertenece (un prefijo NO es una clave)", !pertenece(trie, "cas"));
+        chequear("Ej3 - pertenece (más larga que una clave guardada)", !pertenece(trie, "casas"));
+        chequear("Ej3 - pertenece (camino que no existe)", !pertenece(trie, "perro"));
+        chequear("Ej3 - pertenece (clave vacía)", !pertenece(trie, ""));
         Trie vacio;
-        chequear("Ej2 - contiene (trie vacío)", !contiene(vacio, "a"));
+        chequear("Ej3 - pertenece (trie vacío)", !pertenece(vacio, "a"));
     }
 
     // ========================================================================
-    // Ejercicio 3 — tienePrefijo
+    // Ejercicio 4 — obtener
     // ========================================================================
     {
         Trie trie;
-        cargarAMano(trie, {"casa", "caso", "cosa"});
-        chequear("Ej3 - tienePrefijo (prefijo propio)", tienePrefijo(trie, "ca") && tienePrefijo(trie, "cos"));
-        chequear("Ej3 - tienePrefijo (palabra completa)", tienePrefijo(trie, "casa"));
-        chequear("Ej3 - tienePrefijo (más larga que la palabra)", !tienePrefijo(trie, "casas"));
-        chequear("Ej3 - tienePrefijo (letra que no está)", !tienePrefijo(trie, "d"));
-        chequear("Ej3 - tienePrefijo (camino que se corta)", !tienePrefijo(trie, "cu"));
-        chequear("Ej3 - tienePrefijo (prefijo vacío en trie con palabras)", tienePrefijo(trie, ""));
+        cargarConValores(trie, {{"casa", 1}, {"caso", 2}, {"cosa", 3}, {"cas", 0}});
+        chequear("Ej4 - obtener (valores distintos)",
+                 obtener(trie, "casa") == 1 && obtener(trie, "caso") == 2 && obtener(trie, "cosa") == 3);
+        chequear("Ej4 - obtener (clave que es prefijo de otras, valor 0)", obtener(trie, "cas") == 0);
+        Trie t2;
+        cargarConValores(t2, {{"hola", -7}});
+        chequear("Ej4 - obtener (valor negativo)", obtener(t2, "hola") == -7);
+    }
+
+    // ========================================================================
+    // Ejercicio 5 — esHojaVacia
+    // ========================================================================
+    {
+        NodoTrie nodo;
+        chequear("Ej5 - esHojaVacia (nodo nuevo)", esHojaVacia(&nodo));
+        nodo.hayClave = true;
+        chequear("Ej5 - esHojaVacia (hoja con clave NO es vacía)", !esHojaVacia(&nodo));
+        nodo.hayClave = false;
+        NodoTrie* hijo = new NodoTrie();
+        nodo.hijos[indice('z')] = hijo;
+        chequear("Ej5 - esHojaVacia (con un hijo, aunque sea el último)", !esHojaVacia(&nodo));
+        nodo.hijos[indice('z')] = nullptr;
+        delete hijo;
         Trie vacio;
-        chequear("Ej3 - tienePrefijo (prefijo vacío en trie vacío)", !tienePrefijo(vacio, ""));
+        chequear("Ej5 - esHojaVacia (raíz de un trie vacío)", esHojaVacia(vacio.raiz));
+        Trie t;
+        cargarAMano(t, {"a"});
+        chequear("Ej5 - esHojaVacia (raíz con hijo)", !esHojaVacia(t.raiz));
     }
 
     // ========================================================================
-    // Ejercicio 4 — contarConPrefijo
+    // Ejercicio 6 — eliminar
     // ========================================================================
     {
         Trie trie;
-        cargarAMano(trie, {"casa", "casas", "caso", "cosa", "col"});
-        chequear("Ej4 - contarConPrefijo (\"ca\")", contarConPrefijo(trie, "ca") == 3);
-        chequear("Ej4 - contarConPrefijo (\"co\")", contarConPrefijo(trie, "co") == 2);
-        chequear("Ej4 - contarConPrefijo (el prefijo es una palabra: se cuenta)",
-                 contarConPrefijo(trie, "casa") == 2);
-        chequear("Ej4 - contarConPrefijo (palabra sin extensiones)", contarConPrefijo(trie, "col") == 1);
-        chequear("Ej4 - contarConPrefijo (prefijo que no está)", contarConPrefijo(trie, "x") == 0);
-        chequear("Ej4 - contarConPrefijo (más largo que las palabras)", contarConPrefijo(trie, "casaa") == 0);
-        chequear("Ej4 - contarConPrefijo (prefijo vacío = total)", contarConPrefijo(trie, "") == 5);
-    }
-
-    // ========================================================================
-    // Ejercicio 5 — borrar
-    // ========================================================================
-    {
-        Trie trie;
-        cargarAMano(trie, {"casa", "casas", "caso"});
+        cargarConValores(trie, {{"casa", 1}, {"casas", 2}, {"caso", 3}});
         // Nodos: raíz, c, a, s, a, s, o = 7
-        chequear("Ej5 - borrar (nodos iniciales de la prueba)", nodosReales(trie.raiz) == 7);
+        chequear("Ej6 - eliminar (nodos iniciales de la prueba)", nodosReales(trie.raiz) == 7);
 
-        chequear("Ej5 - borrar (palabra existente)", borrar(trie, "casas"));
-        chequear("Ej5 - borrar (poda el nodo que quedó inútil)", nodosReales(trie.raiz) == 6);
-        chequear("Ej5 - borrar (cantidad)", trie.cantidad == 2);
-        chequear("Ej5 - borrar (ya no está)", nodoDe(trie, "casas") == nullptr);
-        chequear("Ej5 - borrar (no afecta a la palabra más corta)",
-                 nodoDe(trie, "casa") != nullptr && nodoDe(trie, "casa")->esFinal);
+        eliminar(trie, "casas");
+        chequear("Ej6 - eliminar (poda el nodo que quedó inútil)", nodosReales(trie.raiz) == 6);
+        chequear("Ej6 - eliminar (cantidad)", trie.cantidad == 2);
+        chequear("Ej6 - eliminar (ya no está)", caminar(trie, "casas") == nullptr);
+        chequear("Ej6 - eliminar (no afecta a la clave más corta)",
+                 esClaveConValor(trie, "casa", 1));
 
-        chequear("Ej5 - borrar (palabra que no existe)", !borrar(trie, "perro") && trie.cantidad == 2);
-        chequear("Ej5 - borrar (un prefijo que no es palabra)",
-                 !borrar(trie, "ca") && trie.cantidad == 2 && nodosReales(trie.raiz) == 6);
-
-        chequear("Ej5 - borrar (poda hasta el primer nodo útil)", borrar(trie, "casa"));
+        eliminar(trie, "casa");
         // Queda: raíz, c, a, s, o. La 's' sigue porque "caso" pasa por ahí.
-        chequear("Ej5 - borrar (no poda nodos que usa otra palabra)",
-                 nodosReales(trie.raiz) == 5 && nodoDe(trie, "caso") != nullptr && nodoDe(trie, "caso")->esFinal);
-        chequear("Ej5 - borrar (borrar dos veces devuelve false)", !borrar(trie, "casa"));
+        chequear("Ej6 - eliminar (poda hasta el primer nodo útil, no más)", nodosReales(trie.raiz) == 5);
+        chequear("Ej6 - eliminar (no toca a la otra clave)",
+                 esClaveConValor(trie, "caso", 3) && trie.cantidad == 1);
 
-        chequear("Ej5 - borrar (última palabra)", borrar(trie, "caso"));
-        chequear("Ej5 - borrar (el trie queda solo con la raíz)",
-                 trie.cantidad == 0 && trie.raiz->hijos.empty() && !trie.raiz->esFinal);
+        eliminar(trie, "caso");
+        chequear("Ej6 - eliminar (última clave: el trie queda solo con la raíz)",
+                 trie.cantidad == 0 && cantidadHijos(trie.raiz) == 0 && !trie.raiz->hayClave);
     }
     {
-        // Borrar una palabra que es PREFIJO de otra: no se poda nada.
+        // Eliminar una clave que es PREFIJO de otra: no se poda nada.
         Trie trie;
-        cargarAMano(trie, {"cas", "casa"});
-        chequear("Ej5 - borrar (palabra que es prefijo de otra)", borrar(trie, "cas"));
-        chequear("Ej5 - borrar (solo desmarca esFinal, no poda)",
-                 nodosReales(trie.raiz) == 5 && nodoDe(trie, "cas") != nullptr && !nodoDe(trie, "cas")->esFinal);
-        chequear("Ej5 - borrar (la otra palabra sigue)", nodoDe(trie, "casa")->esFinal && trie.cantidad == 1);
+        cargarConValores(trie, {{"cas", 1}, {"casa", 2}});
+        eliminar(trie, "cas");
+        chequear("Ej6 - eliminar (clave que es prefijo de otra: no poda)",
+                 nodosReales(trie.raiz) == 5 && esPrefijoSinClave(trie, "cas"));
+        chequear("Ej6 - eliminar (la otra clave sigue con su valor)",
+                 esClaveConValor(trie, "casa", 2) && trie.cantidad == 1);
     }
     {
         // Después de varios borrados no deben quedar ramas muertas.
         Trie trie;
         cargarAMano(trie, diccionario);
-        borrar(trie, "ala");
-        borrar(trie, "alto");
-        borrar(trie, "cosa");
-        chequear("Ej5 - borrar (sin ramas muertas tras varios borrados)",
-                 sinRamasMuertas(trie) && trie.cantidad == 3 && nodosReales(trie.raiz) == 1 + 4 + 5);
+        eliminar(trie, "ala");
+        eliminar(trie, "alto");
+        eliminar(trie, "cosa");
+        // Quedan: algo, casa, caso -> raíz + a,l,g,o + c,a,s,a,o = 10
+        chequear("Ej6 - eliminar (sin ramas muertas tras varios borrados)",
+                 sinRamasMuertas(trie) && trie.cantidad == 3 && nodosReales(trie.raiz) == 10);
+    }
+    {
+        // Eliminar y volver a insertar: el trie sigue funcionando.
+        Trie trie;
+        cargarConValores(trie, {{"casa", 1}});
+        eliminar(trie, "casa");
+        insertar(trie, "casa", 5);
+        chequear("Ej6 - eliminar (se puede volver a insertar)",
+                 trie.cantidad == 1 && esClaveConValor(trie, "casa", 5));
     }
 
     // ========================================================================
-    // Ejercicio 6 — contarNodos
+    // Ejercicio 7 — tienePrefijo
+    // ========================================================================
+    {
+        Trie trie;
+        cargarAMano(trie, {"casa", "caso", "cosa"});
+        chequear("Ej7 - tienePrefijo (prefijo propio)", tienePrefijo(trie, "ca") && tienePrefijo(trie, "cos"));
+        chequear("Ej7 - tienePrefijo (clave completa)", tienePrefijo(trie, "casa"));
+        chequear("Ej7 - tienePrefijo (más larga que la clave)", !tienePrefijo(trie, "casas"));
+        chequear("Ej7 - tienePrefijo (letra que no está)", !tienePrefijo(trie, "d"));
+        chequear("Ej7 - tienePrefijo (camino que se corta)", !tienePrefijo(trie, "cu"));
+        chequear("Ej7 - tienePrefijo (prefijo vacío en trie con claves)", tienePrefijo(trie, ""));
+        Trie vacio;
+        chequear("Ej7 - tienePrefijo (prefijo vacío en trie vacío)", !tienePrefijo(vacio, ""));
+    }
+
+    // ========================================================================
+    // Ejercicio 8 — contarConPrefijo
+    // ========================================================================
+    {
+        Trie trie;
+        cargarAMano(trie, {"casa", "casas", "caso", "cosa", "col"});
+        chequear("Ej8 - contarConPrefijo (\"ca\")", contarConPrefijo(trie, "ca") == 3);
+        chequear("Ej8 - contarConPrefijo (\"co\")", contarConPrefijo(trie, "co") == 2);
+        chequear("Ej8 - contarConPrefijo (el prefijo es una clave: se cuenta)",
+                 contarConPrefijo(trie, "casa") == 2);
+        chequear("Ej8 - contarConPrefijo (clave sin extensiones)", contarConPrefijo(trie, "col") == 1);
+        chequear("Ej8 - contarConPrefijo (prefijo que no está)", contarConPrefijo(trie, "x") == 0);
+        chequear("Ej8 - contarConPrefijo (más largo que las claves)", contarConPrefijo(trie, "casaa") == 0);
+        chequear("Ej8 - contarConPrefijo (prefijo vacío = total)", contarConPrefijo(trie, "") == 5);
+    }
+
+    // ========================================================================
+    // Ejercicio 9 — contarNodos
     // ========================================================================
     {
         Trie vacio;
-        chequear("Ej6 - contarNodos (trie vacío: solo la raíz)", contarNodos(vacio) == 1);
+        chequear("Ej9 - contarNodos (trie vacío: solo la raíz)", contarNodos(vacio) == 1);
         Trie t1;
         cargarAMano(t1, {"casa", "caso"});
-        chequear("Ej6 - contarNodos (prefijo compartido: 6, no 9)", contarNodos(t1) == 6);
+        chequear("Ej9 - contarNodos (prefijo compartido: 6, no 9)", contarNodos(t1) == 6);
         Trie t2;
         cargarAMano(t2, {"casa", "caso", "cosa"});
-        chequear("Ej6 - contarNodos (tres palabras)", contarNodos(t2) == 9);
+        chequear("Ej9 - contarNodos (tres claves)", contarNodos(t2) == 9);
         Trie t3;
         cargarAMano(t3, diccionario);
-        chequear("Ej6 - contarNodos (diccionario)", contarNodos(t3) == nodosReales(t3.raiz));
+        chequear("Ej9 - contarNodos (diccionario)", contarNodos(t3) == nodosReales(t3.raiz));
     }
 
     // ========================================================================
-    // Ejercicio 7 — listarPalabras
+    // Ejercicio 10 — listarClaves
     // ========================================================================
     {
         Trie trie;
         cargarAMano(trie, diccionario);
-        chequear("Ej7 - listarPalabras (todas, en orden alfabético)",
-                 vectoresIguales(listarPalabras(trie),
+        chequear("Ej10 - listarClaves (todas, en orden alfabético)",
+                 vectoresIguales(listarClaves(trie),
                                  {"ala", "algo", "alto", "casa", "caso", "cosa"}));
         Trie vacio;
-        chequear("Ej7 - listarPalabras (trie vacío)", listarPalabras(vacio).empty());
+        chequear("Ej10 - listarClaves (trie vacío)", listarClaves(vacio).empty());
         Trie t2;
         cargarAMano(t2, {"casa", "ca", "c"});
-        chequear("Ej7 - listarPalabras (palabras que son prefijo de otras)",
-                 vectoresIguales(listarPalabras(t2), {"c", "ca", "casa"}));
+        chequear("Ej10 - listarClaves (claves que son prefijo de otras)",
+                 vectoresIguales(listarClaves(t2), {"c", "ca", "casa"}));
     }
 
     // ========================================================================
-    // Ejercicio 8 — autocompletar
+    // Ejercicio 11 — autocompletar
     // ========================================================================
     {
         Trie trie;
         cargarAMano(trie, diccionario);
-        chequear("Ej8 - autocompletar (\"al\")",
+        chequear("Ej11 - autocompletar (\"al\")",
                  vectoresIguales(autocompletar(trie, "al", 10), {"ala", "algo", "alto"}));
-        chequear("Ej8 - autocompletar (\"ca\")",
+        chequear("Ej11 - autocompletar (\"ca\")",
                  vectoresIguales(autocompletar(trie, "ca", 10), {"casa", "caso"}));
-        chequear("Ej8 - autocompletar (límite de resultados)",
+        chequear("Ej11 - autocompletar (límite de resultados)",
                  vectoresIguales(autocompletar(trie, "al", 2), {"ala", "algo"}));
-        chequear("Ej8 - autocompletar (límite 0)", autocompletar(trie, "al", 0).empty());
-        chequear("Ej8 - autocompletar (el prefijo es una palabra)",
+        chequear("Ej11 - autocompletar (límite 0)", autocompletar(trie, "al", 0).empty());
+        chequear("Ej11 - autocompletar (el prefijo es una clave)",
                  vectoresIguales(autocompletar(trie, "algo", 5), {"algo"}));
-        chequear("Ej8 - autocompletar (prefijo que no está)", autocompletar(trie, "x", 5).empty());
-        chequear("Ej8 - autocompletar (prefijo vacío + límite)",
+        chequear("Ej11 - autocompletar (prefijo que no está)", autocompletar(trie, "x", 5).empty());
+        chequear("Ej11 - autocompletar (prefijo vacío + límite)",
                  vectoresIguales(autocompletar(trie, "", 4), {"ala", "algo", "alto", "casa"}));
     }
 
     // ========================================================================
-    // Ejercicio 9 — prefijoComunMasLargo
+    // Ejercicio 12 — prefijoComunMasLargo
     // ========================================================================
     {
         Trie t1;
         cargarAMano(t1, {"flower", "flow", "flight"});
-        chequear("Ej9 - prefijoComunMasLargo (\"fl\")", prefijoComunMasLargo(t1) == "fl");
+        chequear("Ej12 - prefijoComunMasLargo (\"fl\")", prefijoComunMasLargo(t1) == "fl");
         Trie t2;
         cargarAMano(t2, {"dog", "racecar"});
-        chequear("Ej9 - prefijoComunMasLargo (ninguno)", prefijoComunMasLargo(t2) == "");
+        chequear("Ej12 - prefijoComunMasLargo (ninguno)", prefijoComunMasLargo(t2) == "");
         Trie t3;
         cargarAMano(t3, {"casa"});
-        chequear("Ej9 - prefijoComunMasLargo (una sola palabra: ella misma)", prefijoComunMasLargo(t3) == "casa");
+        chequear("Ej12 - prefijoComunMasLargo (una sola clave: ella misma)", prefijoComunMasLargo(t3) == "casa");
         Trie t4;
         cargarAMano(t4, {"ca", "casa", "cascada"});
-        chequear("Ej9 - prefijoComunMasLargo (corta en una palabra final)", prefijoComunMasLargo(t4) == "ca");
+        chequear("Ej12 - prefijoComunMasLargo (corta en una clave)", prefijoComunMasLargo(t4) == "ca");
         Trie vacio;
-        chequear("Ej9 - prefijoComunMasLargo (trie vacío)", prefijoComunMasLargo(vacio) == "");
+        chequear("Ej12 - prefijoComunMasLargo (trie vacío)", prefijoComunMasLargo(vacio) == "");
     }
 
     // ========================================================================
-    // Ejercicio 10 — buscarConComodin
+    // Ejercicio 13 — buscarConComodin
     // ========================================================================
     {
         Trie trie;
         cargarAMano(trie, {"bad", "dad", "mad"});
-        chequear("Ej10 - buscarConComodin (sin comodines, existe)", buscarConComodin(trie, "bad"));
-        chequear("Ej10 - buscarConComodin (sin comodines, no existe)", !buscarConComodin(trie, "pad"));
-        chequear("Ej10 - buscarConComodin (comodín al principio)", buscarConComodin(trie, ".ad"));
-        chequear("Ej10 - buscarConComodin (comodines al final)", buscarConComodin(trie, "b.."));
-        chequear("Ej10 - buscarConComodin (todo comodines)", buscarConComodin(trie, "..."));
-        chequear("Ej10 - buscarConComodin (comodín en el medio)", buscarConComodin(trie, "m.d"));
-        chequear("Ej10 - buscarConComodin (patrón más corto: es un prefijo)", !buscarConComodin(trie, "b."));
-        chequear("Ej10 - buscarConComodin (patrón más largo)", !buscarConComodin(trie, "...."));
-        chequear("Ej10 - buscarConComodin (el comodín no alcanza)", !buscarConComodin(trie, "x.."));
-        chequear("Ej10 - buscarConComodin (patrón vacío)", !buscarConComodin(trie, ""));
+        chequear("Ej13 - buscarConComodin (sin comodines, existe)", buscarConComodin(trie, "bad"));
+        chequear("Ej13 - buscarConComodin (sin comodines, no existe)", !buscarConComodin(trie, "pad"));
+        chequear("Ej13 - buscarConComodin (comodín al principio)", buscarConComodin(trie, ".ad"));
+        chequear("Ej13 - buscarConComodin (comodines al final)", buscarConComodin(trie, "b.."));
+        chequear("Ej13 - buscarConComodin (todo comodines)", buscarConComodin(trie, "..."));
+        chequear("Ej13 - buscarConComodin (comodín en el medio)", buscarConComodin(trie, "m.d"));
+        chequear("Ej13 - buscarConComodin (patrón más corto: es un prefijo)", !buscarConComodin(trie, "b."));
+        chequear("Ej13 - buscarConComodin (patrón más largo)", !buscarConComodin(trie, "...."));
+        chequear("Ej13 - buscarConComodin (el comodín no alcanza)", !buscarConComodin(trie, "x.."));
+        chequear("Ej13 - buscarConComodin (patrón vacío)", !buscarConComodin(trie, ""));
 
         // Hay que probar TODOS los hijos: la primera rama no alcanza.
         Trie t2;
         cargarAMano(t2, {"abc", "bcd", "bxd"});
-        chequear("Ej10 - buscarConComodin (backtracking entre ramas)", buscarConComodin(t2, ".xd"));
+        chequear("Ej13 - buscarConComodin (backtracking entre ramas)", buscarConComodin(t2, ".xd"));
     }
 
     // ========================================================================
-    // Ejercicio 11 — reemplazarRaices
+    // Ejercicio 14 — reemplazarRaices
     // ========================================================================
     {
-        chequear("Ej11 - reemplazarRaices (ejemplo del enunciado)",
+        chequear("Ej14 - reemplazarRaices (ejemplo del enunciado)",
                  reemplazarRaices({"cat", "bat", "rat"}, "the cattle was rattled by the battery") ==
                  "the cat was rat by the bat");
-        chequear("Ej11 - reemplazarRaices (gana la raíz más corta)",
+        chequear("Ej14 - reemplazarRaices (gana la raíz más corta)",
                  reemplazarRaices({"a", "aa", "aaa"}, "aaaa aa b") == "a a b");
-        chequear("Ej11 - reemplazarRaices (raíz más corta aunque se cargue después)",
+        chequear("Ej14 - reemplazarRaices (raíz más corta aunque se cargue después)",
                  reemplazarRaices({"catt", "cat", "ca"}, "cattle") == "ca");
-        chequear("Ej11 - reemplazarRaices (ninguna raíz aplica)",
+        chequear("Ej14 - reemplazarRaices (ninguna raíz aplica)",
                  reemplazarRaices({"xyz"}, "hola mundo") == "hola mundo");
-        chequear("Ej11 - reemplazarRaices (sin raíces)",
+        chequear("Ej14 - reemplazarRaices (sin raíces)",
                  reemplazarRaices({}, "hola mundo") == "hola mundo");
-        chequear("Ej11 - reemplazarRaices (la palabra es la raíz)",
+        chequear("Ej14 - reemplazarRaices (la palabra es la raíz)",
                  reemplazarRaices({"hola"}, "hola holas") == "hola hola");
-        chequear("Ej11 - reemplazarRaices (una sola palabra)",
+        chequear("Ej14 - reemplazarRaices (una sola palabra)",
                  reemplazarRaices({"pre"}, "preparar") == "pre");
     }
 
     // ========================================================================
-    // Ejercicio 12 — palabraMasLargaConstruible
+    // Ejercicio 15 — sugerenciaMasFrecuente
     // ========================================================================
     {
-        chequear("Ej12 - palabraMasLargaConstruible (\"world\")",
-                 palabraMasLargaConstruible({"w", "wo", "wor", "worl", "world"}) == "world");
-        chequear("Ej12 - palabraMasLargaConstruible (desempate alfabético)",
-                 palabraMasLargaConstruible({"a", "banana", "app", "appl", "ap", "apply", "apple"}) == "apple");
-        chequear("Ej12 - palabraMasLargaConstruible (desempate, otro orden)",
-                 palabraMasLargaConstruible({"b", "ba", "a", "ab"}) == "ab");
-        chequear("Ej12 - palabraMasLargaConstruible (falta un prefijo intermedio)",
-                 palabraMasLargaConstruible({"c", "cas", "casa"}) == "c");
-        chequear("Ej12 - palabraMasLargaConstruible (ninguna cumple)",
-                 palabraMasLargaConstruible({"banana", "casa"}) == "");
-        chequear("Ej12 - palabraMasLargaConstruible (lista vacía)",
-                 palabraMasLargaConstruible({}) == "");
-        chequear("Ej12 - palabraMasLargaConstruible (palabras repetidas)",
-                 palabraMasLargaConstruible({"a", "a", "ab", "ab"}) == "ab");
+        Trie trie;
+        cargarConValores(trie, {{"casa", 5}, {"caso", 9}, {"cosa", 9}, {"casas", 3}});
+        chequear("Ej15 - sugerenciaMasFrecuente (\"ca\")", sugerenciaMasFrecuente(trie, "ca") == "caso");
+        chequear("Ej15 - sugerenciaMasFrecuente (empate: gana la menor alfabéticamente)",
+                 sugerenciaMasFrecuente(trie, "c") == "caso");
+        chequear("Ej15 - sugerenciaMasFrecuente (prefijo vacío)", sugerenciaMasFrecuente(trie, "") == "caso");
+        chequear("Ej15 - sugerenciaMasFrecuente (el prefijo es una clave y gana)",
+                 sugerenciaMasFrecuente(trie, "casa") == "casa");
+        chequear("Ej15 - sugerenciaMasFrecuente (única candidata)", sugerenciaMasFrecuente(trie, "casas") == "casas");
+        chequear("Ej15 - sugerenciaMasFrecuente (otra rama)", sugerenciaMasFrecuente(trie, "co") == "cosa");
+        chequear("Ej15 - sugerenciaMasFrecuente (prefijo que no está)", sugerenciaMasFrecuente(trie, "x") == "");
+
+        Trie t2;
+        cargarConValores(t2, {{"a", -5}, {"b", -2}});
+        chequear("Ej15 - sugerenciaMasFrecuente (valores negativos)", sugerenciaMasFrecuente(t2, "") == "b");
+        Trie t3;
+        cargarConValores(t3, {{"hola", 0}});
+        chequear("Ej15 - sugerenciaMasFrecuente (valor 0 también es una sugerencia)",
+                 sugerenciaMasFrecuente(t3, "h") == "hola");
+        Trie vacio;
+        chequear("Ej15 - sugerenciaMasFrecuente (trie vacío)", sugerenciaMasFrecuente(vacio, "") == "");
     }
 
     // ========================================================================
-    // Ejercicio 13 — maximoXor
+    // Ejercicio 16 — maximoXor
     // ========================================================================
     {
-        chequear("Ej13 - maximoXor (ejemplo: 5 ^ 25 = 28)", maximoXor({3, 10, 5, 25, 2, 8}) == 28);
-        chequear("Ej13 - maximoXor (otro ejemplo: 127)",
+        chequear("Ej16 - maximoXor (ejemplo: 5 ^ 25 = 28)", maximoXor({3, 10, 5, 25, 2, 8}) == 28);
+        chequear("Ej16 - maximoXor (otro ejemplo: 127)",
                  maximoXor({14, 70, 53, 83, 49, 91, 36, 80, 92, 51, 66, 70}) == 127);
-        chequear("Ej13 - maximoXor (un solo elemento)", maximoXor({7}) == 0);
-        chequear("Ej13 - maximoXor (iguales)", maximoXor({4, 4, 4}) == 0);
-        chequear("Ej13 - maximoXor (8 ^ 2 = 10)", maximoXor({8, 10, 2}) == 10);
-        chequear("Ej13 - maximoXor (usa los 30 bits)", maximoXor({1073741823, 0}) == 1073741823);
+        chequear("Ej16 - maximoXor (un solo elemento)", maximoXor({7}) == 0);
+        chequear("Ej16 - maximoXor (iguales)", maximoXor({4, 4, 4}) == 0);
+        chequear("Ej16 - maximoXor (8 ^ 2 = 10)", maximoXor({8, 10, 2}) == 10);
+        chequear("Ej16 - maximoXor (usa los 30 bits)", maximoXor({1073741823, 0}) == 1073741823);
 
         // Comparación con fuerza bruta sobre números pseudo-aleatorios.
         std::vector<int> v;
@@ -444,33 +549,33 @@ int main()
             semilla = semilla * 1103515245u + 12345u;
             v.push_back(static_cast<int>((semilla >> 4) % 1073741824u));
         }
-        chequear("Ej13 - maximoXor (coincide con fuerza bruta en 300 números)",
+        chequear("Ej16 - maximoXor (coincide con fuerza bruta en 300 números)",
                  maximoXor(v) == maximoXorFuerzaBruta(v));
     }
 
     // ========================================================================
-    // Ejercicio 14 — contarHojas
+    // Ejercicio 17 — contarHojas
     // ========================================================================
     {
         Rosetree<int>* arbol = construirRosetreeEjemplo();
-        chequear("Ej14 - contarHojas (árbol de ejemplo: 5, 6, 3 y 8)", contarHojas(arbol) == 4);
-        chequear("Ej14 - contarHojas (subárbol)", contarHojas(arbol->hijos[0]) == 2);
-        chequear("Ej14 - contarHojas (una hoja)", contarHojas(arbol->hijos[1]) == 1);
-        chequear("Ej14 - contarHojas (árbol vacío)", contarHojas(nullptr) == 0);
+        chequear("Ej17 - contarHojas (árbol de ejemplo: 5, 6, 3 y 8)", contarHojas(arbol) == 4);
+        chequear("Ej17 - contarHojas (subárbol)", contarHojas(arbol->hijos[0]) == 2);
+        chequear("Ej17 - contarHojas (una hoja)", contarHojas(arbol->hijos[1]) == 1);
+        chequear("Ej17 - contarHojas (árbol vacío)", contarHojas(nullptr) == 0);
         liberarRosetree(arbol);
     }
 
     // ========================================================================
-    // Ejercicio 15 — nodosEnNivel
+    // Ejercicio 18 — nodosEnNivel
     // ========================================================================
     {
         Rosetree<int>* arbol = construirRosetreeEjemplo();
-        chequear("Ej15 - nodosEnNivel (nivel 0: la raíz)", nodosEnNivel(arbol, 0) == 1);
-        chequear("Ej15 - nodosEnNivel (nivel 1)", nodosEnNivel(arbol, 1) == 3);
-        chequear("Ej15 - nodosEnNivel (nivel 2)", nodosEnNivel(arbol, 2) == 3);
-        chequear("Ej15 - nodosEnNivel (nivel 3)", nodosEnNivel(arbol, 3) == 1);
-        chequear("Ej15 - nodosEnNivel (nivel que no existe)", nodosEnNivel(arbol, 4) == 0);
-        chequear("Ej15 - nodosEnNivel (árbol vacío)", nodosEnNivel(nullptr, 0) == 0);
+        chequear("Ej18 - nodosEnNivel (nivel 0: la raíz)", nodosEnNivel(arbol, 0) == 1);
+        chequear("Ej18 - nodosEnNivel (nivel 1)", nodosEnNivel(arbol, 1) == 3);
+        chequear("Ej18 - nodosEnNivel (nivel 2)", nodosEnNivel(arbol, 2) == 3);
+        chequear("Ej18 - nodosEnNivel (nivel 3)", nodosEnNivel(arbol, 3) == 1);
+        chequear("Ej18 - nodosEnNivel (nivel que no existe)", nodosEnNivel(arbol, 4) == 0);
+        chequear("Ej18 - nodosEnNivel (árbol vacío)", nodosEnNivel(nullptr, 0) == 0);
         liberarRosetree(arbol);
     }
 

@@ -11,131 +11,174 @@
 // Podés agregar funciones auxiliares (por ejemplo, recursivas) arriba de la
 // función que las usa. Si querés que sean privadas del archivo, declaralas
 // `static`.
+//
+// Del header tenés a mano: indice(c) (de 'a'..'z' a 0..25) y simbolo(i) (de
+// 0..25 a 'a'..'z'). Los dos trabajan con size_t: para recorrer los hijos
+// usá `for (size_t i = 0; i < TAM_ALFABETO; i++)`. Ojo con -Wconversion:
+// para armar un char a partir de un número usá simbolo(i).
 // ============================================================================
 
 // ============================================================================
-// PARTE 1 — OPERACIONES BÁSICAS
+// PARTE 1 — TAD DICCIONARIO SOBRE UN TRIE
 // ============================================================================
 
 // Ejercicio 1 — Insertar
-void insertar(Trie& trie, const std::string& palabra)
+void insertar(Trie& trie, const std::string& clave, int valor)
 {
     // TODO: implementar insertar.
     // Recordá:
-    //   - Arrancá en trie.raiz y recorré la palabra letra por letra.
-    //   - Si el nodo actual no tiene hijo para esa letra, creálo con `new`
-    //     (nodo->hijos[letra] = new NodoTrie();).
+    //   - Arrancá en trie.raiz y recorré la clave símbolo por símbolo.
+    //   - Para cada símbolo c, el hijo está en nodo->hijos[indice(c)]. Si es
+    //     nullptr, creálo con `new NodoTrie()`.
     //   - Avanzá al hijo.
-    //   - Al terminar, marcá el nodo como final. Si NO era final todavía,
-    //     es una palabra nueva: incrementá trie.cantidad.
+    //   - Al terminar, si el nodo NO tenía hayClave todavía, es una clave
+    //     nueva: incrementá trie.cantidad. Después poné hayClave = true y
+    //     guardá el valor (si ya existía, esto reemplaza el valor anterior).
     (void)trie;
-    (void)palabra;
+    (void)clave;
+    (void)valor;
 }
 
-// Ejercicio 2 — Contiene
-bool contiene(const Trie& trie, const std::string& palabra)
+// Ejercicio 2 — NodoDe
+NodoTrie* nodoDe(const Trie& trie, const std::string& clave)
 {
-    // TODO: implementar contiene.
+    // TODO: implementar nodoDe.
     // Recordá:
-    //   - Recorré el camino letra por letra. Si en algún paso no existe el
-    //     hijo (nodo->hijos.find(letra) == nodo->hijos.end()), la palabra no está.
-    //   - Si llegaste al final del camino, la palabra está solo si el nodo es esFinal.
-    //   - La palabra vacía nunca está guardada.
+    //   - Bajá desde la raíz símbolo por símbolo.
+    //   - Si en algún momento el nodo actual es nullptr, el camino se cortó:
+    //     devolvé nullptr.
+    //   - Al terminar de recorrer la clave, devolvé el nodo al que llegaste.
     (void)trie;
-    (void)palabra;
+    (void)clave;
+    return nullptr;
+}
+
+// Ejercicio 3 — Pertenece
+bool pertenece(const Trie& trie, const std::string& clave)
+{
+    // TODO: implementar pertenece.
+    // Recordá:
+    //   - Usá nodoDe. La clave pertenece si el nodo existe Y tiene hayClave.
+    //   - Con la clave vacía, nodoDe devuelve la raíz, que nunca tiene hayClave.
+    (void)trie;
+    (void)clave;
     return false;
 }
 
-// Ejercicio 3 — Tiene prefijo
+// Ejercicio 4 — Obtener
+int obtener(const Trie& trie, const std::string& clave)
+{
+    // TODO: implementar obtener.
+    // Recordá:
+    //   - La precondición dice que la clave pertenece, así que nodoDe no
+    //     devuelve nullptr. Devolvé el valor de ese nodo.
+    (void)trie;
+    (void)clave;
+    return 0;
+}
+
+// Ejercicio 5 — EsHojaVacia
+bool esHojaVacia(const NodoTrie* nodo)
+{
+    // TODO: implementar esHojaVacia.
+    // Recordá:
+    //   - Si el nodo tiene hayClave, NO es hoja vacía (aunque no tenga hijos).
+    //   - Si algún hijo no es nullptr, tampoco.
+    //   - Si no, sí lo es.
+    (void)nodo;
+    return false;
+}
+
+// Ejercicio 6 — Eliminar
+void eliminar(Trie& trie, const std::string& clave)
+{
+    // TODO: implementar eliminar.
+    // Recordá (es la versión de la teórica, con una pila):
+    //   - Una pila de ancestros: un std::vector<NodoTrie*> con push_back,
+    //     back y pop_back alcanza (o std::stack, con #include <stack>).
+    //   - Bajá por la clave: antes de pasar al hijo, apilá el nodo actual.
+    //   - En el nodo de la clave: hayClave = false, valor = 0, y bajá en 1
+    //     trie.cantidad.
+    //   - Limpieza (la teórica la llama LimpiarHojasVacias): mientras la pila
+    //     no esté vacía Y el nodo sea hoja vacía:
+    //         padre = tope de la pila (y lo desapilás)
+    //         padre->hijos[indice(símbolo que llevaba del padre al nodo)] = nullptr
+    //         delete nodo
+    //         nodo = padre
+    //     El símbolo que lleva del padre al nodo es clave[k], con k yendo de
+    //     clave.size() - 1 hacia atrás.
+    //   - La raíz nunca se borra (cuando la pila queda vacía, se corta).
+    (void)trie;
+    (void)clave;
+}
+
+// ============================================================================
+// PARTE 2 — PREFIJOS Y RECORRIDOS (DFS sobre el trie)
+// ============================================================================
+
+// Ejercicio 7 — Tiene prefijo
 bool tienePrefijo(const Trie& trie, const std::string& prefijo)
 {
     // TODO: implementar tienePrefijo.
     // Recordá:
-    //   - Es casi igual a contiene, pero NO mira esFinal: alcanza con que el
-    //     camino exista completo.
-    //   - Prefijo vacío: true solo si el trie tiene alguna palabra
-    //     (trie.cantidad > 0).
-    // Tip: acá conviene escribir (arriba de esta función) un auxiliar
-    //   static NodoTrie* buscarNodo(const Trie& trie, const std::string& s)
-    // que devuelva el nodo al que se llega con `s` (o nullptr), y reusarlo
-    // en contiene, contarConPrefijo y autocompletar.
+    //   - Con prefijo vacío, nodoDe devuelve la raíz aunque el trie esté
+    //     vacío: tratá ese caso aparte (true solo si trie.cantidad > 0).
+    //   - Con cualquier otro prefijo, alcanza con que nodoDe no devuelva
+    //     nullptr (el invariante garantiza que de ahí cuelga alguna clave).
     (void)trie;
     (void)prefijo;
     return false;
 }
 
-// Ejercicio 4 — Contar con prefijo
+// Ejercicio 8 — Contar con prefijo
 int contarConPrefijo(const Trie& trie, const std::string& prefijo)
 {
     // TODO: implementar contarConPrefijo.
     // Recordá:
-    //   - Llegá hasta el nodo del prefijo. Si el camino se corta, hay 0 palabras.
-    //   - Desde ese nodo, contá los nodos esFinal de su subárbol (incluido
+    //   - Llegá hasta el nodo del prefijo (nodoDe). Si es nullptr, hay 0 claves.
+    //   - Desde ese nodo, contá los nodos con hayClave de su subárbol (incluido
     //     él) con una función recursiva auxiliar:
-    //       cuenta = (nodo->esFinal ? 1 : 0) + suma de cuenta(hijo) para cada hijo
+    //       cuenta = (nodo->hayClave ? 1 : 0) + suma de cuenta(hijo) para cada hijo no nulo
     (void)trie;
     (void)prefijo;
     return 0;
 }
 
-// Ejercicio 5 — Borrar
-bool borrar(Trie& trie, const std::string& palabra)
-{
-    // TODO: implementar borrar.
-    // Recordá:
-    //   - Primero verificá que la palabra esté (contiene). Si no, devolvé false.
-    //   - Escribí una función recursiva auxiliar que baje por el camino y
-    //     devuelva `true` si el nodo quedó INÚTIL (sin hijos y no final).
-    //       * Caso base (llegaste al final de la palabra): esFinal = false.
-    //       * Caso recursivo: llamá para el hijo; si devolvió true, hacé
-    //         delete del hijo y sacalo del map (hijos.erase(letra)).
-    //       * Devolvé: ¿este nodo quedó sin hijos y no es final?
-    //   - La raíz nunca se borra, aunque quede vacía.
-    //   - No te olvides de decrementar trie.cantidad.
-    (void)trie;
-    (void)palabra;
-    return false;
-}
-
-// ============================================================================
-// PARTE 2 — RECORRIDOS (DFS sobre el trie)
-// ============================================================================
-
-// Ejercicio 6 — Contar nodos
+// Ejercicio 9 — Contar nodos
 int contarNodos(const Trie& trie)
 {
     // TODO: implementar contarNodos.
     // Recordá:
     //   - Es igual que contar nodos en un rosetree: 1 (el nodo actual) más la
-    //     suma de contar cada hijo. Usá una función auxiliar recursiva que
-    //     reciba un NodoTrie*.
+    //     suma de contar cada hijo no nulo. Usá una función auxiliar recursiva
+    //     que reciba un NodoTrie*.
     (void)trie;
     return 0;
 }
 
-// Ejercicio 7 — Listar palabras
-std::vector<std::string> listarPalabras(const Trie& trie)
+// Ejercicio 10 — Listar claves
+std::vector<std::string> listarClaves(const Trie& trie)
 {
-    // TODO: implementar listarPalabras.
+    // TODO: implementar listarClaves.
     // Recordá:
     //   - Auxiliar recursiva: void recolectar(NodoTrie* nodo, std::string& camino,
     //                                         std::vector<std::string>& resultado)
-    //   - Si el nodo es esFinal, agregá `camino` al resultado.
-    //   - Para cada (letra, hijo) del map: camino.push_back(letra);
-    //     recolectar(hijo, ...); camino.pop_back();
-    //   - Como std::map itera ordenado por letra, el resultado sale en orden
-    //     alfabético sin ordenar nada.
+    //   - Si el nodo tiene hayClave, agregá `camino` al resultado.
+    //   - Para i de 0 a TAM_ALFABETO - 1 (size_t), si hijos[i] no es nullptr:
+    //       camino.push_back(simbolo(i)); recolectar(hijo, ...); camino.pop_back();
+    //   - Recorriendo i en orden, el resultado sale en orden alfabético sin
+    //     ordenar nada.
     (void)trie;
     return {};
 }
 
-// Ejercicio 8 — Autocompletar
+// Ejercicio 11 — Autocompletar
 std::vector<std::string> autocompletar(const Trie& trie, const std::string& prefijo, int maxResultados)
 {
     // TODO: implementar autocompletar.
     // Recordá:
-    //   - Llegá al nodo del prefijo. Si no existe, devolvé un vector vacío.
-    //   - Hacé el mismo DFS que en listarPalabras, pero arrancando con
+    //   - Llegá al nodo del prefijo (nodoDe). Si es nullptr, devolvé un vector vacío.
+    //   - Hacé el mismo DFS que en listarClaves, pero arrancando con
     //     camino = prefijo.
     //   - Cortá apenas resultado.size() llegue a maxResultados (chequeá al
     //     entrar a la recursión y dentro del for de los hijos).
@@ -145,16 +188,16 @@ std::vector<std::string> autocompletar(const Trie& trie, const std::string& pref
     return {};
 }
 
-// Ejercicio 9 — Prefijo común más largo
+// Ejercicio 12 — Prefijo común más largo
 std::string prefijoComunMasLargo(const Trie& trie)
 {
     // TODO: implementar prefijoComunMasLargo.
     // Recordá:
     //   - Arrancá en la raíz con prefijo = "".
-    //   - Mientras el nodo tenga exactamente 1 hijo Y no sea final: agregá la
-    //     letra de ese hijo al prefijo y bajá.
-    //   - Con std::map, el único hijo es nodo->hijos.begin() (->first es la
-    //     letra, ->second el nodo).
+    //   - Mientras el nodo NO tenga hayClave y tenga exactamente 1 hijo no
+    //     nulo: agregá el símbolo de ese hijo al prefijo y bajá.
+    //   - Para saber cuántos hijos tiene (y cuál es el único) recorré
+    //     hijos[0..TAM_ALFABETO-1] contando los que no son nullptr.
     (void)trie;
     return "";
 }
@@ -163,54 +206,54 @@ std::string prefijoComunMasLargo(const Trie& trie)
 // PARTE 3 — PROBLEMAS CON TRIES
 // ============================================================================
 
-// Ejercicio 10 — Buscar con comodín
+// Ejercicio 13 — Buscar con comodín
 bool buscarConComodin(const Trie& trie, const std::string& patron)
 {
     // TODO: implementar buscarConComodin.
     // Recordá:
     //   - Auxiliar recursiva: bool buscar(NodoTrie* nodo, const std::string& patron, size_t i)
-    //   - Caso base: i == patron.size() -> la respuesta es nodo->esFinal.
-    //   - Si patron[i] == '.', probá con TODOS los hijos; alcanza con que
-    //     UNO devuelva true.
-    //   - Si es una letra común, seguí solo por ese hijo (si no existe, false).
-    //   - Patrón vacío: false (no hay palabra vacía guardada).
+    //   - Caso base: i == patron.size() -> la respuesta es nodo->hayClave.
+    //   - Si patron[i] == '.', probá con TODOS los hijos no nulos; alcanza con
+    //     que UNO devuelva true.
+    //   - Si es una letra común, seguí solo por ese hijo (si es nullptr, false).
+    //   - Patrón vacío: false (no hay clave vacía guardada).
     (void)trie;
     (void)patron;
     return false;
 }
 
-// Ejercicio 11 — Reemplazar por raíces
+// Ejercicio 14 — Reemplazar por raíces
 std::string reemplazarRaices(const std::vector<std::string>& raices, const std::string& oracion)
 {
     // TODO: implementar reemplazarRaices.
     // Recordá:
-    //   - Armá un Trie con todas las raíces (usá tu función insertar).
+    //   - Armá un Trie con todas las raíces (usá tu función insertar con valor 0).
     //   - Separá la oración en palabras (por ejemplo con std::istringstream,
     //     `#include <sstream>`, o recorriendo los caracteres hasta cada ' ').
-    //   - Para cada palabra, bajá por el trie letra por letra. Si el nodo al
-    //     que llegás es esFinal, esa es la raíz más corta: usá
-    //     palabra.substr(0, i + 1). Si el camino se corta antes, dejá la
-    //     palabra tal cual.
+    //   - Para cada palabra, bajá por el trie símbolo por símbolo. Si el nodo
+    //     al que llegás tiene hayClave, esa es la raíz más corta: usá
+    //     palabra.substr(0, i + 1). Si el camino se corta antes (nullptr),
+    //     dejá la palabra tal cual.
     //   - Volvé a unir las palabras con un espacio entre cada una.
     (void)raices;
     (void)oracion;
     return "";
 }
 
-// Ejercicio 12 — Palabra más larga construible
-std::string palabraMasLargaConstruible(const std::vector<std::string>& palabras)
+// Ejercicio 15 — Sugerencia más frecuente
+std::string sugerenciaMasFrecuente(const Trie& trie, const std::string& prefijo)
 {
-    // TODO: implementar palabraMasLargaConstruible.
+    // TODO: implementar sugerenciaMasFrecuente.
     // Recordá:
-    //   - Insertá todas las palabras en un Trie.
-    //   - DFS desde la raíz llevando el camino actual, pero SOLO bajá a un
-    //     hijo si ese hijo es esFinal (eso garantiza que todos los prefijos
-    //     están en la lista).
-    //   - Cada vez que llegues a un nodo, si el camino es más largo (estricto)
-    //     que el mejor hallado, actualizá el mejor. Como se visita en orden
+    //   - Llegá al nodo del prefijo (nodoDe). Si es nullptr, devolvé "".
+    //   - DFS desde ahí llevando el camino actual (arrancando en `prefijo`),
+    //     y la mejor clave y su valor hasta ahora. Podés pasarlos por
+    //     referencia a la auxiliar, junto con un bool "encontré alguna".
+    //   - En cada nodo con hayClave: si todavía no hay mejor, o si su valor es
+    //     ESTRICTAMENTE mayor que el mejor, actualizá. Como se visita en orden
     //     alfabético, el estricto ya resuelve el desempate.
-    //   - Si ninguna palabra cumple, el mejor queda en "".
-    (void)palabras;
+    (void)trie;
+    (void)prefijo;
     return "";
 }
 
@@ -218,7 +261,7 @@ std::string palabraMasLargaConstruible(const std::vector<std::string>& palabras)
 // PARTE 4 — TRIES BINARIOS
 // ============================================================================
 
-// Ejercicio 13 — Máximo XOR
+// Ejercicio 16 — Máximo XOR
 int maximoXor(const std::vector<int>& numeros)
 {
     // TODO: implementar maximoXor.
@@ -243,7 +286,7 @@ int maximoXor(const std::vector<int>& numeros)
 // PARTE 5 — ROSETREE (árbol n-ario)
 // ============================================================================
 
-// Ejercicio 14 — Contar hojas
+// Ejercicio 17 — Contar hojas
 int contarHojas(Rosetree<int>* nodo)
 {
     // TODO: implementar contarHojas.
@@ -255,7 +298,7 @@ int contarHojas(Rosetree<int>* nodo)
     return 0;
 }
 
-// Ejercicio 15 — Nodos en un nivel
+// Ejercicio 18 — Nodos en un nivel
 int nodosEnNivel(Rosetree<int>* nodo, int nivel)
 {
     // TODO: implementar nodosEnNivel.

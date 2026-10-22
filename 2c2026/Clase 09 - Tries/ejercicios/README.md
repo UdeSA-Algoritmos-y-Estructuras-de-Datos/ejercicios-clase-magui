@@ -1,8 +1,9 @@
 # Ejercicios - Tut 09 (Tries)
 
 Cáscara para resolver los ejercicios de la novena clase: tries (árboles de
-prefijos), recorridos sobre ellos, problemas clásicos que se resuelven con
-un trie, y un cierre con rosetrees (árboles n-arios).
+prefijos) como implementación del TAD Diccionario, recorridos sobre ellos,
+problemas clásicos que se resuelven con un trie, y un cierre con rosetrees
+(árboles n-arios).
 
 ## Archivos
 
@@ -63,45 +64,63 @@ un trie, y un cierre con rosetrees (árboles n-arios).
 
 ## La estructura
 
+Seguimos la teórica (Clase 14 - Tries): el trie implementa el TAD
+**Diccionario** (clave → valor) con claves string, y los campos y las
+operaciones se llaman como en la teórica.
+
 ```cpp
+const size_t TAM_ALFABETO = 26;      // Σ = {'a', ..., 'z'}
+size_t indice(char c);               // Indice(s): 'a' -> 0, ..., 'z' -> 25
+char   simbolo(size_t i);            // la inversa: 0 -> 'a', ...
+
 struct NodoTrie {
-    std::map<char, NodoTrie*> hijos;  // letra -> hijo (ordenado alfabéticamente)
-    bool esFinal;                     // ¿acá termina una palabra?
+    std::array<NodoTrie*, TAM_ALFABETO> hijos;  // hijos[i]: subtrie del i-ésimo símbolo
+    bool hayClave;                              // ¿el camino hasta acá es una clave?
+    int  valor;                                 // valor asociado (si hayClave)
 };
 
 struct Trie {
     NodoTrie* raiz;   // siempre existe; representa el prefijo vacío
-    int cantidad;     // palabras distintas guardadas
+    int cantidad;     // claves distintas guardadas
 };
 ```
+
+**Invariante:** todo nodo hoja tiene `hayClave == true`, excepto la raíz (que
+puede estar vacía). O sea: no hay "ramas muertas". `eliminar` tiene que
+preservarlo.
+
+> Las claves solo pueden tener letras minúsculas (`a-z`). Con otro carácter,
+> `indice` se sale del arreglo.
 
 El `Trie` ya trae su destructor (libera todos los nodos), así que no hace
 falta que te ocupes de liberar el trie. Lo que sí tenés que cuidar:
 
-- En `borrar`, hacer `delete` de los nodos que podás.
+- En `eliminar`, hacer `delete` de los nodos que podás.
 - En `maximoXor`, liberar los nodos que crees.
 
-> Como `hijos` es un `std::map`, al recorrerlo las letras salen en orden
-> alfabético. Varios ejercicios (listar, autocompletar, palabra más larga)
-> aprovechan esto para no tener que ordenar nada.
+> Los hijos están en un arreglo indexado por letra, así que recorrerlos de 0
+> a 25 los visita en **orden alfabético**. Varios ejercicios (listar,
+> autocompletar, sugerencia más frecuente) aprovechan esto para no tener que
+> ordenar nada.
 
 ## Sobre los ejercicios
 
-### Parte 1 — Operaciones básicas
+### Parte 1 — TAD Diccionario sobre un trie
 
-- **insertar**: crea los nodos que falten y marca el último como final.
-- **contiene**: ¿está la palabra COMPLETA? (ojo con los prefijos).
-- **tienePrefijo**: ¿alguna palabra empieza así?
-- **contarConPrefijo**: cuántas palabras empiezan con el prefijo.
-- **borrar**: desmarca la palabra y **poda** los nodos que quedaron inútiles.
+- **insertar**: crea los nodos que falten; si la clave ya estaba, reemplaza el valor.
+- **nodoDe**: el nodo al que se llega con una clave (o `nullptr`). Es la base de casi todo lo demás.
+- **pertenece** / **obtener**: ¿está la clave COMPLETA? / ¿qué valor tiene?
+- **esHojaVacia**: ¿el nodo no es clave y no tiene hijos?
+- **eliminar**: desmarca la clave y **poda** con una pila de ancestros, como en la teórica.
 
-Todas cuestan O(k), con k el largo de la palabra, sin importar cuántas
-palabras haya guardadas. Esa es la gracia del trie.
+Todas cuestan O(m), con m el largo de la clave, sin importar cuántas claves
+haya guardadas. Esa es la gracia del trie.
 
-### Parte 2 — Recorridos
+### Parte 2 — Prefijos y recorridos
 
+- **tienePrefijo**, **contarConPrefijo**: preguntas sobre prefijos (acá se nota por qué importa el invariante).
 - **contarNodos**: cuánta memoria usa el trie (¡mirá cuánto ahorran los prefijos compartidos!).
-- **listarPalabras**: DFS con el camino actual; sale en orden alfabético.
+- **listarClaves**: DFS con el camino actual; sale en orden alfabético.
 - **autocompletar**: lo que hace un buscador al escribir; con un tope de resultados.
 - **prefijoComunMasLargo**: bajar mientras haya un único camino posible.
 
@@ -109,11 +128,11 @@ palabras haya guardadas. Esa es la gracia del trie.
 
 - **buscarConComodin**: un patrón con `'.'` que reemplaza cualquier letra (backtracking sobre las ramas).
 - **reemplazarRaices**: reemplazar cada palabra de una oración por su raíz más corta.
-- **palabraMasLargaConstruible**: la palabra más larga cuyos prefijos están todos en la lista.
+- **sugerenciaMasFrecuente**: el trie como diccionario palabra → frecuencia; la sugerencia de mayor valor para un prefijo.
 
 ### Parte 4 — Tries binarios
 
-- **maximoXor**: el mayor `a ^ b` entre los elementos de un vector, en O(n · 30) en vez de O(n²). Un trie sobre los **bits** de cada número.
+- **maximoXor**: el mayor `a ^ b` entre los elementos de un vector, en O(n · 30) en vez de O(n²). Un trie sobre los **bits** de cada número (acá Σ = {0, 1}).
 
 ### Parte 5 — Rosetree
 
@@ -124,5 +143,5 @@ caso particular de rosetree):
 - **nodosEnNivel**
 
 > Repasá los apuntes (`Tut-09 - Tries - apuntes.md`) antes de empezar:
-> la idea de `esFinal` y la poda de `borrar` son los dos puntos donde más
-> se tropieza.
+> el invariante y la poda de `eliminar` son los dos puntos donde más se
+> tropieza.
