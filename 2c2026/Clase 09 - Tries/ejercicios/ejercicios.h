@@ -138,8 +138,8 @@ bool esHojaVacia(const NodoTrie* nodo);
 //   - Eliminar "casa" cuando también existe "casas" NO borra nodos
 //     (solo pone hayClave = false en el nodo de la 'a').
 //   - Eliminar "casas" cuando existe "casa" borra únicamente el nodo de la 's'.
-// La teórica lo resuelve con una PILA que guarda los ancestros del nodo
-// mientras se baja, y una función LimpiarHojasVacias que los va sacando.
+// La teórica lo resuelve guardando en una PILA los ancestros del nodo
+// mientras se baja.
 // La raíz nunca se borra, aunque quede vacía.
 // Complejidad: O(m).
 void eliminar(Trie& trie, const std::string& clave);

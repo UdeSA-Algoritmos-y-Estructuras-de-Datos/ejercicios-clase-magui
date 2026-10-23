@@ -26,14 +26,9 @@
 void insertar(Trie& trie, const std::string& clave, int valor)
 {
     // TODO: implementar insertar.
-    // Recordá:
-    //   - Arrancá en trie.raiz y recorré la clave símbolo por símbolo.
-    //   - Para cada símbolo c, el hijo está en nodo->hijos[indice(c)]. Si es
-    //     nullptr, creálo con `new NodoTrie()`.
-    //   - Avanzá al hijo.
-    //   - Al terminar, si el nodo NO tenía hayClave todavía, es una clave
-    //     nueva: incrementá trie.cantidad. Después poné hayClave = true y
-    //     guardá el valor (si ya existía, esto reemplaza el valor anterior).
+    // Se espera que, después de la llamada, la clave quede guardada con su
+    // valor. Si ya estaba, solo cambia el valor. Cuidá que `cantidad` refleje
+    // la cantidad de claves distintas.
     (void)trie;
     (void)clave;
     (void)valor;
@@ -43,11 +38,9 @@ void insertar(Trie& trie, const std::string& clave, int valor)
 NodoTrie* nodoDe(const Trie& trie, const std::string& clave)
 {
     // TODO: implementar nodoDe.
-    // Recordá:
-    //   - Bajá desde la raíz símbolo por símbolo.
-    //   - Si en algún momento el nodo actual es nullptr, el camino se cortó:
-    //     devolvé nullptr.
-    //   - Al terminar de recorrer la clave, devolvé el nodo al que llegaste.
+    // Se espera el nodo que corresponde a la clave, o nullptr si no hay
+    // ningún camino que la represente. Que el nodo exista no implica que la
+    // clave esté guardada.
     (void)trie;
     (void)clave;
     return nullptr;
@@ -57,9 +50,8 @@ NodoTrie* nodoDe(const Trie& trie, const std::string& clave)
 bool pertenece(const Trie& trie, const std::string& clave)
 {
     // TODO: implementar pertenece.
-    // Recordá:
-    //   - Usá nodoDe. La clave pertenece si el nodo existe Y tiene hayClave.
-    //   - Con la clave vacía, nodoDe devuelve la raíz, que nunca tiene hayClave.
+    // Se espera true solo si la clave completa está guardada (no alcanza con
+    // que sea el comienzo de otra clave).
     (void)trie;
     (void)clave;
     return false;
@@ -69,9 +61,8 @@ bool pertenece(const Trie& trie, const std::string& clave)
 int obtener(const Trie& trie, const std::string& clave)
 {
     // TODO: implementar obtener.
-    // Recordá:
-    //   - La precondición dice que la clave pertenece, así que nodoDe no
-    //     devuelve nullptr. Devolvé el valor de ese nodo.
+    // Se espera el valor asociado a la clave (que, por precondición, está
+    // guardada).
     (void)trie;
     (void)clave;
     return 0;
@@ -81,10 +72,8 @@ int obtener(const Trie& trie, const std::string& clave)
 bool esHojaVacia(const NodoTrie* nodo)
 {
     // TODO: implementar esHojaVacia.
-    // Recordá:
-    //   - Si el nodo tiene hayClave, NO es hoja vacía (aunque no tenga hijos).
-    //   - Si algún hijo no es nullptr, tampoco.
-    //   - Si no, sí lo es.
+    // Se espera true solo si el nodo no representa una clave y además no
+    // tiene ningún hijo.
     (void)nodo;
     return false;
 }
@@ -93,21 +82,12 @@ bool esHojaVacia(const NodoTrie* nodo)
 void eliminar(Trie& trie, const std::string& clave)
 {
     // TODO: implementar eliminar.
-    // Recordá (es la versión de la teórica, con una pila):
-    //   - Una pila de ancestros: un std::vector<NodoTrie*> con push_back,
-    //     back y pop_back alcanza (o std::stack, con #include <stack>).
-    //   - Bajá por la clave: antes de pasar al hijo, apilá el nodo actual.
-    //   - En el nodo de la clave: hayClave = false, valor = 0, y bajá en 1
-    //     trie.cantidad.
-    //   - Limpieza (la teórica la llama LimpiarHojasVacias): mientras la pila
-    //     no esté vacía Y el nodo sea hoja vacía:
-    //         padre = tope de la pila (y lo desapilás)
-    //         padre->hijos[indice(símbolo que llevaba del padre al nodo)] = nullptr
-    //         delete nodo
-    //         nodo = padre
-    //     El símbolo que lleva del padre al nodo es clave[k], con k yendo de
-    //     clave.size() - 1 hacia atrás.
-    //   - La raíz nunca se borra (cuando la pila queda vacía, se corta).
+    // Se espera que la clave y su valor dejen de estar guardados, que las
+    // demás claves (incluidas las que comparten camino con la eliminada)
+    // sigan intactas, y que el trie siga cumpliendo el invariante: no pueden
+    // quedar nodos que no lleven a ninguna clave, y la memoria de los nodos
+    // que sobran tiene que liberarse. Los nodos no conocen a su padre: pensá
+    // qué necesitás guardar mientras bajás para poder subir después.
     (void)trie;
     (void)clave;
 }
@@ -120,11 +100,8 @@ void eliminar(Trie& trie, const std::string& clave)
 bool tienePrefijo(const Trie& trie, const std::string& prefijo)
 {
     // TODO: implementar tienePrefijo.
-    // Recordá:
-    //   - Con prefijo vacío, nodoDe devuelve la raíz aunque el trie esté
-    //     vacío: tratá ese caso aparte (true solo si trie.cantidad > 0).
-    //   - Con cualquier otro prefijo, alcanza con que nodoDe no devuelva
-    //     nullptr (el invariante garantiza que de ahí cuelga alguna clave).
+    // Se espera true si alguna clave guardada empieza con el prefijo. Pensá
+    // qué debería pasar con el prefijo vacío en un trie vacío.
     (void)trie;
     (void)prefijo;
     return false;
@@ -134,11 +111,8 @@ bool tienePrefijo(const Trie& trie, const std::string& prefijo)
 int contarConPrefijo(const Trie& trie, const std::string& prefijo)
 {
     // TODO: implementar contarConPrefijo.
-    // Recordá:
-    //   - Llegá hasta el nodo del prefijo (nodoDe). Si es nullptr, hay 0 claves.
-    //   - Desde ese nodo, contá los nodos con hayClave de su subárbol (incluido
-    //     él) con una función recursiva auxiliar:
-    //       cuenta = (nodo->hayClave ? 1 : 0) + suma de cuenta(hijo) para cada hijo no nulo
+    // Se espera la cantidad de claves guardadas que empiezan con el prefijo,
+    // contando a la propia clave si el prefijo coincide exactamente con una.
     (void)trie;
     (void)prefijo;
     return 0;
@@ -148,10 +122,8 @@ int contarConPrefijo(const Trie& trie, const std::string& prefijo)
 int contarNodos(const Trie& trie)
 {
     // TODO: implementar contarNodos.
-    // Recordá:
-    //   - Es igual que contar nodos en un rosetree: 1 (el nodo actual) más la
-    //     suma de contar cada hijo no nulo. Usá una función auxiliar recursiva
-    //     que reciba un NodoTrie*.
+    // Se espera la cantidad total de nodos que tiene el trie, contando la
+    // raíz. Es el mismo problema que contar nodos en un rosetree.
     (void)trie;
     return 0;
 }
@@ -160,14 +132,9 @@ int contarNodos(const Trie& trie)
 std::vector<std::string> listarClaves(const Trie& trie)
 {
     // TODO: implementar listarClaves.
-    // Recordá:
-    //   - Auxiliar recursiva: void recolectar(NodoTrie* nodo, std::string& camino,
-    //                                         std::vector<std::string>& resultado)
-    //   - Si el nodo tiene hayClave, agregá `camino` al resultado.
-    //   - Para i de 0 a TAM_ALFABETO - 1 (size_t), si hijos[i] no es nullptr:
-    //       camino.push_back(simbolo(i)); recolectar(hijo, ...); camino.pop_back();
-    //   - Recorriendo i en orden, el resultado sale en orden alfabético sin
-    //     ordenar nada.
+    // Se espera la lista de todas las claves guardadas, ordenadas
+    // alfabéticamente. Pensá cómo reconstruir cada clave a partir del camino
+    // recorrido, y si hace falta ordenar algo o el propio trie ya lo da.
     (void)trie;
     return {};
 }
@@ -176,12 +143,9 @@ std::vector<std::string> listarClaves(const Trie& trie)
 std::vector<std::string> autocompletar(const Trie& trie, const std::string& prefijo, int maxResultados)
 {
     // TODO: implementar autocompletar.
-    // Recordá:
-    //   - Llegá al nodo del prefijo (nodoDe). Si es nullptr, devolvé un vector vacío.
-    //   - Hacé el mismo DFS que en listarClaves, pero arrancando con
-    //     camino = prefijo.
-    //   - Cortá apenas resultado.size() llegue a maxResultados (chequeá al
-    //     entrar a la recursión y dentro del for de los hijos).
+    // Se espera la lista (alfabética) de claves que empiezan con el prefijo,
+    // con no más de maxResultados elementos. Si ya juntaste los que hacen
+    // falta, no tiene sentido seguir recorriendo.
     (void)trie;
     (void)prefijo;
     (void)maxResultados;
@@ -192,12 +156,9 @@ std::vector<std::string> autocompletar(const Trie& trie, const std::string& pref
 std::string prefijoComunMasLargo(const Trie& trie)
 {
     // TODO: implementar prefijoComunMasLargo.
-    // Recordá:
-    //   - Arrancá en la raíz con prefijo = "".
-    //   - Mientras el nodo NO tenga hayClave y tenga exactamente 1 hijo no
-    //     nulo: agregá el símbolo de ese hijo al prefijo y bajá.
-    //   - Para saber cuántos hijos tiene (y cuál es el único) recorré
-    //     hijos[0..TAM_ALFABETO-1] contando los que no son nullptr.
+    // Se espera el prefijo más largo que comparten todas las claves guardadas.
+    // Pensá en qué momento el camino deja de ser el mismo para todas: cuando
+    // se bifurca, o cuando alguna clave termina.
     (void)trie;
     return "";
 }
@@ -210,13 +171,9 @@ std::string prefijoComunMasLargo(const Trie& trie)
 bool buscarConComodin(const Trie& trie, const std::string& patron)
 {
     // TODO: implementar buscarConComodin.
-    // Recordá:
-    //   - Auxiliar recursiva: bool buscar(NodoTrie* nodo, const std::string& patron, size_t i)
-    //   - Caso base: i == patron.size() -> la respuesta es nodo->hayClave.
-    //   - Si patron[i] == '.', probá con TODOS los hijos no nulos; alcanza con
-    //     que UNO devuelva true.
-    //   - Si es una letra común, seguí solo por ese hijo (si es nullptr, false).
-    //   - Patrón vacío: false (no hay clave vacía guardada).
+    // Se espera true si existe alguna clave guardada que encaje con el patrón
+    // de punta a punta, donde '.' acepta cualquier letra. Un comodín puede
+    // encajar de muchas maneras: pensá cómo explorar todas.
     (void)trie;
     (void)patron;
     return false;
@@ -226,15 +183,10 @@ bool buscarConComodin(const Trie& trie, const std::string& patron)
 std::string reemplazarRaices(const std::vector<std::string>& raices, const std::string& oracion)
 {
     // TODO: implementar reemplazarRaices.
-    // Recordá:
-    //   - Armá un Trie con todas las raíces (usá tu función insertar con valor 0).
-    //   - Separá la oración en palabras (por ejemplo con std::istringstream,
-    //     `#include <sstream>`, o recorriendo los caracteres hasta cada ' ').
-    //   - Para cada palabra, bajá por el trie símbolo por símbolo. Si el nodo
-    //     al que llegás tiene hayClave, esa es la raíz más corta: usá
-    //     palabra.substr(0, i + 1). Si el camino se corta antes (nullptr),
-    //     dejá la palabra tal cual.
-    //   - Volvé a unir las palabras con un espacio entre cada una.
+    // Se espera la oración con cada palabra reemplazada por la raíz más corta
+    // que sea prefijo suyo (o sin cambios si no hay ninguna), respetando los
+    // espacios que separan las palabras. Podés usar tu Trie para guardar las
+    // raíces.
     (void)raices;
     (void)oracion;
     return "";
@@ -244,14 +196,9 @@ std::string reemplazarRaices(const std::vector<std::string>& raices, const std::
 std::string sugerenciaMasFrecuente(const Trie& trie, const std::string& prefijo)
 {
     // TODO: implementar sugerenciaMasFrecuente.
-    // Recordá:
-    //   - Llegá al nodo del prefijo (nodoDe). Si es nullptr, devolvé "".
-    //   - DFS desde ahí llevando el camino actual (arrancando en `prefijo`),
-    //     y la mejor clave y su valor hasta ahora. Podés pasarlos por
-    //     referencia a la auxiliar, junto con un bool "encontré alguna".
-    //   - En cada nodo con hayClave: si todavía no hay mejor, o si su valor es
-    //     ESTRICTAMENTE mayor que el mejor, actualizá. Como se visita en orden
-    //     alfabético, el estricto ya resuelve el desempate.
+    // Se espera la clave de mayor valor entre las que empiezan con el prefijo,
+    // o "" si no hay ninguna. En caso de empate, la que va primero
+    // alfabéticamente. Ojo: los valores pueden ser 0 o negativos.
     (void)trie;
     (void)prefijo;
     return "";
@@ -265,19 +212,10 @@ std::string sugerenciaMasFrecuente(const Trie& trie, const std::string& prefijo)
 int maximoXor(const std::vector<int>& numeros)
 {
     // TODO: implementar maximoXor.
-    // Recordá:
-    //   - Los números tienen a lo sumo 30 bits (0 <= x < 2^30): los bits van
-    //     del 29 (más significativo) al 0.
-    //   - Bit i de x:  (x >> i) & 1
-    //   - Insertar x: desde la raíz, para i = 29 .. 0 creá (si falta) el
-    //     hijo[bit] y bajá.
-    //   - Mejor pareja para x: para i = 29 .. 0, querés ir por el bit
-    //     OPUESTO (1 - bit). Si existe ese hijo, sumá (1 << i) al XOR
-    //     resultante y bajá por él; si no, bajá por el hijo igual al bit.
-    //   - La respuesta es el máximo de esos XOR sobre todos los x.
-    //   - Liberá los nodos al final (ej.: con una función recursiva
-    //     postorder, o guardando todos los nodos en un std::vector<NodoBit*>
-    //     para hacer delete en un loop).
+    // Se espera el mayor XOR posible entre dos elementos del vector. Probar
+    // todos los pares funciona pero es O(n²): la idea es usar un trie sobre
+    // los bits de los números (30 bits, del más al menos significativo) para
+    // bajar la complejidad. Acordate de liberar la memoria que pidas.
     (void)numeros;
     return 0;
 }
@@ -290,10 +228,8 @@ int maximoXor(const std::vector<int>& numeros)
 int contarHojas(Rosetree<int>* nodo)
 {
     // TODO: implementar contarHojas.
-    // Recordá:
-    //   - Si el nodo es nullptr, hay 0 hojas.
-    //   - Si el nodo no tiene hijos (nodo->hijos.empty()), es una hoja: 1.
-    //   - Si no, sumá las hojas de cada hijo (con un for sobre nodo->hijos).
+    // Se espera la cantidad de nodos sin hijos del árbol. Pensá qué pasa con
+    // el árbol vacío y con un árbol de un solo nodo.
     (void)nodo;
     return 0;
 }
@@ -302,10 +238,8 @@ int contarHojas(Rosetree<int>* nodo)
 int nodosEnNivel(Rosetree<int>* nodo, int nivel)
 {
     // TODO: implementar nodosEnNivel.
-    // Recordá:
-    //   - Si el nodo es nullptr, hay 0.
-    //   - Si nivel == 0, el nodo actual es el único que cuenta: devolvé 1.
-    //   - Si no, sumá nodosEnNivel(hijo, nivel - 1) para cada hijo.
+    // Se espera cuántos nodos hay exactamente a esa profundidad, contando la
+    // raíz como nivel 0 (0 si el árbol no llega a ese nivel).
     (void)nodo;
     (void)nivel;
     return 0;
