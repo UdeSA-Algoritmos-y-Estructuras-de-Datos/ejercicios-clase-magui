@@ -10,26 +10,23 @@ Tutorial 9 – Tries
 - [¿Qué es un trie?](#qué-es-un-trie)
   - [Ejemplo](#ejemplo)
   - [El invariante del trie](#el-invariante-del-trie)
-- [Representación en C++](#representación-en-c)
+- [Cómo se representa](#cómo-se-representa)
   - [¿Cómo guardar los hijos?](#cómo-guardar-los-hijos)
-- [Operaciones del diccionario](#operaciones-del-diccionario)
-  - [Diccionario vacío](#diccionario-vacío)
+- [Las operaciones del diccionario](#las-operaciones-del-diccionario)
   - [Inserción](#inserción)
-  - [Búsqueda: `nodoDe`, `pertenece` y `obtener`](#búsqueda-nodode-pertenece-y-obtener)
+  - [Búsqueda](#búsqueda)
   - [Eliminación](#eliminación)
 - [Prefijos y recorridos](#prefijos-y-recorridos)
-  - [Buscar por prefijo](#buscar-por-prefijo)
-  - [Listar y autocompletar](#listar-y-autocompletar)
 - [Complejidad y espacio](#complejidad-y-espacio)
   - [El peor caso de espacio](#el-peor-caso-de-espacio)
   - [Comprimiendo el espacio: árboles PATRICIA](#comprimiendo-el-espacio-árboles-patricia)
 - [Comparación de representaciones](#comparación-de-representaciones)
-- [Problemas típicos que se resuelven con un trie](#problemas-típicos-que-se-resuelven-con-un-trie)
+- [Dónde aparecen los tries](#dónde-aparecen-los-tries)
 - [Más allá de los strings: tries binarios](#más-allá-de-los-strings-tries-binarios)
 - [Repaso relámpago](#repaso-relámpago)
 - [Anexo: Rosetree (árbol n-ario)](#anexo-rosetree-árbol-n-ario)
   - [¿Qué es un rosetree?](#qué-es-un-rosetree)
-  - [Representación en C++ del rosetree](#representación-en-c-del-rosetree)
+  - [Representación del rosetree](#representación-del-rosetree)
   - [Recorridos y recursión](#recorridos-y-recursión)
   - [Ejemplos donde aparece naturalmente](#ejemplos-donde-aparece-naturalmente)
   - [Relación con el trie](#relación-con-el-trie)
@@ -38,11 +35,11 @@ Tutorial 9 – Tries
 
 # Objetivos de la clase
 - Entender qué es un trie y por qué permite que `Pertenece` y `Obtener` cuesten O(m) en **peor caso**, sin depender de cuántas claves haya guardadas.
-- Implementar el TAD Diccionario sobre un trie en C++: inserción, búsqueda, y eliminación preservando el invariante.
-- Recorrer un trie con DFS para listar claves y armar un autocompletado.
-- Reconocer problemas donde un trie es la herramienta natural (prefijos, comodines, frecuencias, XOR máximo).
+- Conocer cómo se representa un trie y qué hace cada operación del TAD Diccionario sobre él, incluyendo el invariante que hay que preservar al eliminar.
+- Entender cómo se buscan claves por prefijo y cómo se recorre un trie.
+- Reconocer los problemas donde un trie es la herramienta natural.
 - Comparar el trie con el AVL y la tabla de hash, incluyendo su costo en espacio.
-- Reconocer al trie como un caso particular de rosetree (árbol n-ario) y trabajar con rosetrees genéricos.
+- Reconocer al trie como un caso particular de rosetree (árbol n-ario).
 
 
 
@@ -59,13 +56,13 @@ En las dos, el peor caso **depende de cuántas claves hay guardadas**.
 
 > Pregunta para pensar: leer una clave ya cuesta O(m). ¿Se puede lograr que `Pertenece` y `Obtener` cuesten O(m) en **peor caso**, sin depender de `n`?
 
-Un caso donde esto importa mucho es la **búsqueda por prefijo** (el teclado del celular sugiriendo palabras, el buscador completando tu consulta): dado un prefijo, encontrar todas las claves que empiezan con él. Una tabla de hash no sirve (el hash de `"cas"` no se parece en nada al de `"casa"`: habría que revisar todas las claves, O(n)), y el AVL tiene que comparar strings enteros en cada paso. Un trie guarda las claves **letra por letra, compartiendo los prefijos**.
+Un caso donde esto importa mucho es la **búsqueda por prefijo** (el teclado del celular sugiriendo palabras, el buscador completando tu consulta): dado un prefijo, encontrar todas las claves que empiezan con él. Una tabla de hash no sirve para esto (el hash de `"cas"` no se parece en nada al de `"casa"`, así que habría que revisar todas las claves), y el AVL tiene que comparar strings enteros en cada paso. El trie resuelve el problema guardando las claves **símbolo por símbolo, compartiendo los prefijos**.
 
 
 
 # ¿Qué es un trie?
 
-Sea Σ un **alfabeto**: un conjunto finito de símbolos (por ejemplo, las letras de `a` a `z`).
+Sea Σ un **alfabeto**: un conjunto finito de símbolos (por ejemplo, las letras de `a` a `z`). Escribimos `|Σ|` para la cantidad de símbolos.
 
 > **Trie**: un árbol en el que cada nodo tiene `|Σ|` hijos, uno por cada símbolo de Σ.
 > - El camino desde la raíz hasta un nodo corresponde a una **clave** (concatenando los símbolos de las aristas recorridas).
@@ -73,7 +70,7 @@ Sea Σ un **alfabeto**: un conjunto finito de símbolos (por ejemplo, las letras
 
 Cada hijo de un trie es a su vez la raíz de un trie más chico (un **subtrie**).
 
-Un trie (del inglés *re**trie**val*) se pronuncia como "try". Las aristas están etiquetadas con un símbolo, pero el nodo **no guarda su símbolo**: queda determinado por la posición del hijo dentro de su padre.
+La palabra viene de *re**trie**val* (recuperación) y se pronuncia como "try". El nodo **no guarda su propio símbolo**: queda determinado por el lugar que ocupa dentro de su padre (el hijo número 0 corresponde a la `a`, el 1 a la `b`, etcétera).
 
 ## Ejemplo
 
@@ -94,74 +91,39 @@ Un trie con las claves `ala → 1`, `casa → 5`, `caso → 9` y `cosa → 2`. L
                 └── a   [2]     "cosa" → 2
 ```
 
-Fijate que existe el camino `a → l`, pero **`"al"` no es una clave guardada**: es solo un prefijo de `"ala"`. Por eso cada nodo necesita saber si **el camino hasta él es una clave completa** (`hayClave`) y, en ese caso, cuál es su valor.
+Fijate que existe el camino `a → l`, pero **`"al"` no es una clave guardada**: es solo un prefijo de `"ala"`. Por eso cada nodo necesita registrar si **el camino hasta él es una clave completa** y, en ese caso, cuál es su valor.
 
-Además, `hayClave` permite guardar claves que son prefijo de otras: si el trie tiene `"ca"` y `"casa"`, el nodo de la `'a'` tiene `hayClave == true` **y** además tiene un hijo.
+Esa marca también permite guardar claves que son prefijo de otras: si el trie tiene `"ca"` y `"casa"`, el nodo de la `'a'` es una clave **y** además tiene un hijo.
 
-> Esta es la fuente de error más común: olvidarse de `hayClave` y devolver `true` para cualquier prefijo. Si el trie tiene `"casa"`, `pertenece("cas")` tiene que dar `false`.
+> Esta es la fuente de error más común: olvidarse de esa marca y responder que cualquier prefijo es una clave. Si el trie tiene `"casa"`, la pregunta "¿pertenece `"cas"`?" tiene que dar que no.
 
 ## El invariante del trie
 
 La definición de arriba también permitiría un trie que **desperdicia espacio**: con nodos que son hojas, no tienen hijos y tampoco tienen valor. Mirando solo uno de esos nodos no se puede saber si es una clave con un valor "vacío" o si esa clave directamente no está. Para evitar la ambigüedad, todo trie debe cumplir:
 
-> **Invariante de un trie**: todo nodo hoja (sin hijos) tiene un valor asociado (`hayClave == true`), **excepto la raíz**, que puede no tener hijos ni valor (el trie vacío).
+> **Invariante de un trie**: todo nodo hoja (sin hijos) tiene un valor asociado (es una clave), **excepto la raíz**, que puede no tener hijos ni valor (el trie vacío).
 
-Es decir: **no puede haber "ramas muertas"**. Tiene una consecuencia muy útil: si el camino de un prefijo existe, seguro hay alguna clave que empieza con él. Por eso `tienePrefijo` alcanza con comprobar que el camino exista. La que tiene que trabajar para mantener el invariante es la **eliminación**.
+Dicho de otra forma: **no puede haber "ramas muertas"**, caminos que no llevan a ninguna clave. Esto tiene una consecuencia muy útil: si el camino de un prefijo existe, seguro hay alguna clave que empieza con él. El que tiene que trabajar para sostener el invariante es el **borrado**.
 
 
 
-# Representación en C++
+# Cómo se representa
 
-Cada nodo tiene tres campos (los mismos de la teórica):
+Cada nodo del trie guarda tres cosas (las mismas que en la teórica):
 
-- `hayClave`: ¿el camino hasta el nodo es una clave completa?
-- `valor`: el valor asociado a esa clave, si `hayClave`.
-- `hijos`: un arreglo de `|Σ|` punteros, uno por símbolo. `hijos[i]` es el subtrie al que se baja si el próximo símbolo es el `i`-ésimo de Σ (`nullptr` si no hay ninguna clave por ese lado).
+| Campo | Qué es |
+|---|---|
+| `hayClave` | Un booleano: ¿el camino hasta este nodo es una clave completa? |
+| `valor` | El valor asociado a esa clave (solo tiene sentido si `hayClave` es verdadero). |
+| `hijos` | Un arreglo de `|Σ|` punteros, uno por símbolo. La posición `i` apunta al subtrie al que se baja si el próximo símbolo es el `i`-ésimo de Σ, y vale `nil` (puntero nulo) si no hay ninguna clave por ese lado. |
 
-Para pasar de un símbolo a su posición usamos `Indice(s)`, que debe costar O(1). Con Σ = {`a`, ..., `z`}, `Indice(s) = s - 'a'`.
+El trie vacío no es un puntero nulo: es **un nodo real, sin clave y con todos los hijos nulos**. Así la raíz siempre existe, y "diccionario vacío" cuesta O(|Σ|) = O(1) (el alfabeto es de tamaño constante).
 
-```cpp
-const size_t TAM_ALFABETO = 26;
+Para pasar de un símbolo a su posición en el arreglo se usa una función `Indice(s)`, que debe costar O(1). Con Σ = {`a`, ..., `z`}, la posición de `a` es 0, la de `b` es 1, y así hasta la `z`, que es 25 (alcanza con restarle la `a`).
 
-size_t indice(char c) {                  // Indice(s): 'a' -> 0, ..., 'z' -> 25
-    return static_cast<size_t>(c - 'a');
-}
+> Las claves solo pueden usar símbolos de Σ. Con un símbolo que no esté en el alfabeto (una mayúscula, por ejemplo), `Indice` daría una posición fuera del arreglo. Siempre hay que respetar esa precondición.
 
-char simbolo(size_t i) {                 // la inversa: 0 -> 'a', ..., 25 -> 'z'
-    return static_cast<char>('a' + i);
-}
-
-struct NodoTrie {
-    std::array<NodoTrie*, TAM_ALFABETO> hijos;
-    bool hayClave;
-    int valor;
-
-    NodoTrie() : hayClave(false), valor(0) {
-        hijos.fill(nullptr);
-    }
-};
-
-// Postorder: primero liberar los hijos, después el nodo.
-void liberarNodoTrie(NodoTrie* nodo) {
-    if (nodo == nullptr) return;
-    for (NodoTrie* hijo : nodo->hijos) {
-        liberarNodoTrie(hijo);
-    }
-    delete nodo;
-}
-
-struct Trie {
-    NodoTrie* raiz;   // siempre existe; representa el prefijo vacío
-    int cantidad;     // cantidad de claves guardadas
-
-    Trie() : raiz(new NodoTrie()), cantidad(0) {}
-    ~Trie() { liberarNodoTrie(raiz); }
-};
-```
-
-> Como el trie crea nodos con `new`, tiene que liberarlos: es el mismo patrón de `liberarArbol` de la clase de ABB (postorder). Si no, Valgrind se va a quejar.
-
-> Las claves solo pueden usar las letras de Σ. Con una mayúscula o un carácter raro, `indice` se sale del arreglo y accede a memoria que no es del nodo. Siempre hay que respetar la precondición.
+Como el trie reserva memoria dinámica para sus nodos, también tiene que liberarla al destruirse: se libera cada subtrie antes que su padre, igual que con los árboles binarios.
 
 ## ¿Cómo guardar los hijos?
 
@@ -169,205 +131,63 @@ El arreglo de `|Σ|` punteros es lo que muestra la teórica, pero no es la únic
 
 | Representación | Buscar un hijo | Memoria por nodo | Recorrido en orden | Comentario |
 |---|---|---|---|---|
-| `std::array<NodoTrie*, 26>` | O(1) **en peor caso** | 26 punteros siempre | Sí (recorriendo 0..25) | La de la teórica. La que usamos. |
-| `std::vector<NodoTrie*>` de tamaño 26 | O(1) | 26 punteros + una alocación extra | Sí | Equivalente al array, pero el tamaño deja de formar parte del tipo. |
-| `std::map<char, NodoTrie*>` | O(log \|Σ\|) | Solo los hijos que existen | Sí (el map está ordenado) | Sirve para cualquier alfabeto y ahorra memoria si hay pocos hijos. |
-| Tabla de hash (`std::unordered_map`) | O(1) **esperado** | Solo los que existen | **No** | Pierde justo lo que hace valioso al trie. |
+| Arreglo de `\|Σ\|` punteros | O(1) **en peor caso** | `\|Σ\|` punteros siempre | Sí (recorriendo las posiciones de 0 a `\|Σ\|-1`) | La de la teórica. La que usamos. |
+| `std::vector` de tamaño `\|Σ\|` | O(1) | `\|Σ\|` punteros + una alocación extra | Sí | Equivalente al arreglo, pero el tamaño deja de ser fijo. |
+| `std::map` de símbolo a nodo | O(log \|Σ\|) | Solo los hijos que existen | Sí (el map está ordenado) | Sirve para cualquier alfabeto y ahorra memoria si hay pocos hijos. |
+| Tabla de hash de símbolo a nodo | O(1) **esperado** | Solo los que existen | **No** | Pierde justo lo que hace valioso al trie. |
 
 > Pregunta para pensar: ¿y si guardáramos los hijos de cada nodo en la tabla de hash de la clase anterior? ¿Qué se pierde? (Pista: mirá la tabla de comparación de más abajo.) Con un alfabeto chico y constante, el arreglo ya da acceso directo, así que el hash no aporta nada y rompe el orden y el peor caso O(m).
 
 
 
-# Operaciones del diccionario
+# Las operaciones del diccionario
 
-En todas las operaciones el patrón es el mismo: **partir de la raíz y bajar un símbolo a la vez**. Los nombres siguen a la teórica (`Insertar`, `NodoDe`, `Pertenece`, `Obtener`, `Eliminar`).
-
-## Diccionario vacío
-
-La raíz siempre es un nodo real, aunque el trie esté vacío (es el constructor de `Trie`): sin clave y con todos los hijos en `nullptr`.
+En todas las operaciones el patrón es el mismo: **se parte de la raíz y se baja un símbolo a la vez**, siguiendo la clave. Los nombres siguen a la teórica: `Insertar`, `NodoDe`, `Pertenece`, `Obtener`, `Eliminar`.
 
 ## Inserción
 
-Se baja por la clave; si falta el hijo para algún símbolo, se crea un trie vacío en ese lugar. Al terminar, se marca el último nodo como clave y se guarda el valor:
+`Insertar(D, clave, valor)` guarda la clave con su valor (si la clave ya estaba, reemplaza el valor anterior). Se recorre la clave símbolo por símbolo: si el camino ya existe se lo sigue, y si en algún punto falta el hijo correspondiente, se crea ahí un trie vacío. Al terminar la clave, el último nodo se marca como clave y se le asigna el valor.
 
-```cpp
-void insertar(Trie& trie, const std::string& clave, int valor) {
-    NodoTrie* a = trie.raiz;
-    for (char c : clave) {
-        size_t i = indice(c);
-        if (a->hijos[i] == nullptr) {
-            a->hijos[i] = new NodoTrie();      // el camino no existía: lo creo
-        }
-        a = a->hijos[i];
-    }
-    if (!a->hayClave) {        // si ya era clave, solo reemplazo el valor
-        trie.cantidad++;
-    }
-    a->hayClave = true;
-    a->valor = valor;
-}
-```
+Costo: **O(m)**, con `m` el largo de la clave. Es un paso O(1) por símbolo, y no depende de cuántas claves haya ya en el trie.
 
-Costo: **O(m)**, con `m` el largo de la clave: un paso O(1) por símbolo, y no depende de cuántas claves haya ya.
+## Búsqueda
 
-## Búsqueda: `nodoDe`, `pertenece` y `obtener`
+Las consultas se apoyan en una operación común, `NodoDe(D, clave)`: devolver el nodo al que se llega siguiendo la clave desde la raíz, o nulo si el camino se corta antes de terminar.
 
-Las dos consultas bajan por el camino de la clave. Conviene tener un auxiliar que devuelva el nodo al que se llega siguiendo la clave (o `nullptr` si el camino se corta):
+- `Pertenece(D, clave)`: la clave está si `NodoDe` devuelve un nodo **y** ese nodo está marcado como clave. Que el camino exista no alcanza: puede ser solo un prefijo.
+- `Obtener(D, clave)`: con la precondición de que la clave pertenece, devuelve el valor guardado en el nodo al que se llega.
 
-```cpp
-NodoTrie* nodoDe(const Trie& trie, const std::string& clave) {
-    NodoTrie* a = trie.raiz;
-    for (char c : clave) {
-        if (a == nullptr) return nullptr;
-        a = a->hijos[indice(c)];
-    }
-    return a;
-}
-
-bool pertenece(const Trie& trie, const std::string& clave) {
-    NodoTrie* a = nodoDe(trie, clave);
-    return a != nullptr && a->hayClave;     // tiene que ser una clave completa
-}
-
-int obtener(const Trie& trie, const std::string& clave) {
-    // Pre: pertenece(trie, clave)
-    return nodoDe(trie, clave)->valor;
-}
-```
-
-Costo de las tres: **O(m)**, no depende de cuántas claves haya en el trie.
+Costo de las dos: **O(m)**, y tampoco depende de cuántas claves haya en el trie.
 
 ## Eliminación
 
-No alcanza con poner `hayClave = false`: si borramos `"casa"` y era la única clave que pasaba por esos nodos, quedarían **hojas vacías** (nodos sin hijos y sin clave), y se rompería el invariante. Hay que revisar, **subiendo**, si el borrado dejó hojas vacías y eliminarlas. Para poder subir (los nodos no tienen puntero al padre) se usa una **pila** donde se van guardando los ancestros mientras se baja:
+No alcanza con "desmarcar" el nodo de la clave. Si se borra `"casa"` y era la única clave que pasaba por esos nodos, quedarían **hojas vacías** (nodos sin hijos y sin clave) y se rompería el invariante. Por eso, al eliminar hay que revisar **hacia arriba** si el borrado dejó hojas vacías, y quitarlas (liberando su memoria).
 
-```cpp
-void eliminar(Trie& trie, const std::string& clave) {
-    // Pre: pertenece(trie, clave)
-    std::vector<NodoTrie*> pila;                 // pila de ancestros
-    NodoTrie* a = trie.raiz;
-    for (char c : clave) {
-        pila.push_back(a);                       // Push
-        a = a->hijos[indice(c)];
-    }
-    a->hayClave = false;
-    a->valor = 0;
-    trie.cantidad--;
-    limpiarHojasVacias(pila, a, clave);
-}
-```
+Un detalle de diseño: los nodos no conocen a su padre. Para poder subir después de haber bajado, hay que **recordar el camino recorrido**; la teórica lo hace con una pila donde se guardan los ancestros mientras se baja. Una **hoja vacía** es un nodo que no es clave y cuyos hijos son todos nulos (revisarlo cuesta O(|Σ|) = O(1)). La poda sube mientras se encuentre una hoja vacía, y se detiene en el primer nodo que todavía sirve; la raíz nunca se elimina.
 
-Un nodo es una **hoja vacía** si no es una clave y todos sus hijos son `nullptr` (O(|Σ|) = O(1)):
-
-```cpp
-bool esHojaVacia(const NodoTrie* a) {
-    if (a->hayClave) return false;
-    for (const NodoTrie* hijo : a->hijos) {
-        if (hijo != nullptr) return false;
-    }
-    return true;
-}
-```
-
-Y la limpieza va sacando ancestros de la pila mientras el nodo actual siga siendo una hoja vacía:
-
-```cpp
-void limpiarHojasVacias(std::vector<NodoTrie*>& pila, NodoTrie* nodo,
-                        const std::string& clave) {
-    size_t k = clave.size();
-    while (!pila.empty() && esHojaVacia(nodo)) {
-        NodoTrie* padre = pila.back();           // Pop
-        pila.pop_back();
-        k--;
-        padre->hijos[indice(clave[k])] = nullptr;   // el padre ya no apunta al nodo
-        delete nodo;
-        nodo = padre;                            // sigo subiendo
-    }
-}
-```
-
-Costo total de `eliminar`: **O(m)**: a lo sumo `m` nodos en la pila, y cada paso de la limpieza es O(1). La raíz nunca se elimina (cuando la pila queda vacía el ciclo termina).
+Costo total: **O(m)**: a lo sumo `m` ancestros a revisar, y cada paso es O(1).
 
 Tres casos para tener en la cabeza (con `"casa"` y `"casas"` en el trie):
 
 | Qué borro | Qué pasa |
 |---|---|
 | `"casas"` | Se poda solo el nodo de la `'s'` final; `"casa"` sigue. |
-| `"casa"` | No se poda nada: solo se desmarca `hayClave` en la `'a'` (todavía hay un hijo `'s'`). |
+| `"casa"` | No se poda nada: solo se desmarca el nodo de la `'a'`, porque todavía tiene un hijo (`'s'`). |
 | `"casa"` y `"casas"` (las dos) | Se poda toda la rama hasta llegar a un nodo que sirva a otra clave (o a la raíz). |
 
-> Pregunta para pensar: ¿por qué hay que apilar los ancestros? ¿Qué otra forma de "subir" tendríamos en una versión recursiva de `eliminar`? (La función recursiva devuelve "este nodo quedó inútil" y el padre decide si lo borra: la pila es la versión iterativa de ese mismo mecanismo.)
+> Pregunta para pensar: ¿por qué hay que recordar los ancestros? ¿Qué otra forma de "subir" habría en una solución recursiva? (Pista: una llamada recursiva ya "recuerda" por dónde bajó.)
 
 
 
 # Prefijos y recorridos
 
-## Buscar por prefijo
+**¿Hay alguna clave con este prefijo?** Basta con ubicarse en el nodo del prefijo con `NodoDe`: si el camino existe, la respuesta es sí. Esto es correcto **gracias al invariante**: como no hay ramas muertas, todo camino que existe lleva a alguna clave. Si el borrado no podara, un prefijo podría existir en el trie sin ninguna clave detrás, y la respuesta sería incorrecta. Es un buen ejemplo de **por qué se mantiene un invariante**.
 
-Con `nodoDe` ya tenemos casi todo. Gracias al invariante (no hay ramas muertas), alcanza con que el camino exista:
+**¿Cuántas claves tienen este prefijo?** Hay que ubicarse en el nodo del prefijo y contar las claves que cuelgan de él (el subtrie).
 
-```cpp
-bool tienePrefijo(const Trie& trie, const std::string& prefijo) {
-    if (prefijo.empty()) return trie.cantidad > 0;   // la raíz existe aunque el trie esté vacío
-    return nodoDe(trie, prefijo) != nullptr;
-}
-```
+**Recorrer todas las claves.** Se hace con un **recorrido en profundidad (DFS)** que va acumulando el camino desde la raíz: cada vez que se llega a un nodo marcado como clave, el camino acumulado en ese momento es una clave del trie. Como los hijos de cada nodo se visitan en el orden de Σ, las claves salen **en orden alfabético**, sin ordenar nada. Esto es lo que quiere decir "recorre en orden" en la tabla de comparación, y es algo que la tabla de hash no puede ofrecer.
 
-> Esto solo es correcto porque `eliminar` poda: si quedara una rama muerta, `tienePrefijo` daría `true` para un prefijo sin ninguna clave. Es un buen ejemplo de **por qué se mantiene un invariante**.
-
-Contar cuántas claves empiezan con un prefijo es llegar a su nodo y contar los nodos con `hayClave` de ese subtrie:
-
-```cpp
-int contarFinales(const NodoTrie* nodo) {
-    int total = nodo->hayClave ? 1 : 0;
-    for (const NodoTrie* hijo : nodo->hijos) {
-        if (hijo != nullptr) total += contarFinales(hijo);
-    }
-    return total;
-}
-
-int contarConPrefijo(const Trie& trie, const std::string& prefijo) {
-    NodoTrie* nodo = nodoDe(trie, prefijo);
-    return nodo == nullptr ? 0 : contarFinales(nodo);
-}
-```
-
-## Listar y autocompletar
-
-Para obtener las claves guardadas se hace un **DFS** llevando un `std::string` con el camino actual: al bajar a un hijo se agrega su símbolo, y al volver se lo saca (*backtracking*). Cada vez que se llega a un nodo con `hayClave`, el camino actual es una clave.
-
-```cpp
-void recolectar(const NodoTrie* nodo, std::string& camino,
-                std::vector<std::string>& resultado) {
-    if (nodo->hayClave) {
-        resultado.push_back(camino);
-    }
-    for (size_t i = 0; i < TAM_ALFABETO; i++) {   // de 'a' a 'z': orden alfabético
-        if (nodo->hijos[i] != nullptr) {
-            camino.push_back(simbolo(i));          // bajo: agrego el símbolo
-            recolectar(nodo->hijos[i], camino, resultado);
-            camino.pop_back();                     // vuelvo: lo saco
-        }
-    }
-}
-```
-
-Como los hijos se recorren de la `a` a la `z`, el resultado sale **en orden alfabético** sin ordenar nada. Esto es lo que quiere decir "recorre en orden" en la tabla de comparación.
-
-El **autocompletado** es lo mismo, pero arrancando desde el nodo del prefijo en vez de desde la raíz, y con el camino inicial igual al prefijo:
-
-```cpp
-std::vector<std::string> autocompletar(const Trie& trie, const std::string& prefijo) {
-    std::vector<std::string> resultado;
-    NodoTrie* nodo = nodoDe(trie, prefijo);       // O(m): me ubico en el prefijo
-    if (nodo == nullptr) return resultado;        // nadie empieza así
-    std::string camino = prefijo;
-    recolectar(nodo, camino, resultado);          // todo lo que cuelga de ahí
-    return resultado;
-}
-```
-
-> Tip: los buscadores no devuelven *todas* las claves sino unas pocas sugerencias. Una versión con tope de resultados puede cortar el DFS apenas junta `maxResultados` claves. Y como el trie es un diccionario, el **valor** puede ser una frecuencia de uso: así se puede sugerir primero la clave con mayor valor (ambas variantes están en los ejercicios).
+**Autocompletar.** Es el mismo recorrido, pero arrancando desde el nodo del prefijo en lugar de desde la raíz: se encuentran todas las claves que empiezan con lo que el usuario escribió. Como el costo de ubicarse en el prefijo es O(m), no depende de cuán grande sea el diccionario. Los buscadores no devuelven *todas* las claves sino unas pocas sugerencias; y, como el trie es un diccionario, el valor asociado puede ser una **frecuencia de uso**, de modo que se puedan sugerir primero las claves más usadas.
 
 
 
@@ -377,20 +197,20 @@ Sea `m` el largo de la clave o prefijo y `n` la cantidad de claves.
 
 | Operación | Complejidad |
 |---|---|
-| `insertar`, `nodoDe`, `pertenece`, `obtener`, `eliminar` | **O(m)** en peor caso |
-| `tienePrefijo` | O(m) |
-| `listarClaves` | O(cantidad de nodos del trie) |
-| `autocompletar(prefijo)` | O(m + tamaño del subtrie recorrido) |
+| `Insertar`, `NodoDe`, `Pertenece`, `Obtener`, `Eliminar` | **O(m)** en peor caso |
+| Saber si hay alguna clave con un prefijo | O(m) |
+| Recorrer todas las claves | O(cantidad de nodos del trie) |
+| Autocompletar un prefijo | O(m + tamaño del subtrie recorrido) |
 
-Lo notable es que **el costo no depende de `n`**: buscar en un trie de 10 claves o de 10 millones cuesta lo mismo si la clave tiene el mismo largo. Eso es lo que no lograban ni el AVL (`O(m log n)`) ni la tabla de hash (`O(n · m)` en peor caso).
+Lo notable es que **el costo no depende de `n`**: buscar en un trie de 10 claves o de 10 millones cuesta lo mismo si la clave tiene el mismo largo. Eso es lo que no lograban ni el AVL (O(m log n)) ni la tabla de hash (O(n · m) en peor caso).
 
 ## El peor caso de espacio
 
 Un trie puede necesitar **O(n · m) nodos** para `n` claves de longitud `m`: muchos más que los O(n) nodos de un ABB o un AVL, porque cada clave puede recorrer un camino de `m` nodos exclusivo suyo (y además cada nodo gasta `|Σ|` punteros).
 
-Un ejemplo concreto: con Σ = {`a`, `b`}, las `n + 1` claves `aⁱ bⁿ⁻ⁱ` (para `0 ≤ i ≤ n`, todas de longitud `n`) forman un trie con **O(n²) nodos**. Por ejemplo, con `n = 3`: `bbb`, `abb`, `aab`, `aaa`. Las ramas se separan enseguida y casi no comparten prefijo, así que casi todos los nodos son exclusivos de una sola clave.
+Un ejemplo concreto: con Σ = {`a`, `b`}, las `n + 1` claves formadas por `i` letras `a` seguidas de `n − i` letras `b` (para `0 ≤ i ≤ n`, todas de longitud `n`) forman un trie con **O(n²) nodos**. Con `n = 3` son `bbb`, `abb`, `aab` y `aaa`: las ramas se separan enseguida y casi no comparten prefijo, así que casi todos los nodos son exclusivos de una sola clave.
 
-> Pregunta para pensar: ¿cuántos nodos tiene (como máximo) un trie con las claves `"a"`, `"aa"`, `"aaa"`, ..., `"aaaa…a"` (hasta `n` letras)? ¿Y uno con `n` claves de largo `m` que no comparten ni una letra?
+> Pregunta para pensar: ¿cuántos nodos tiene (como máximo) un trie con las claves `"a"`, `"aa"`, `"aaa"`, ..., hasta `n` letras? ¿Y uno con `n` claves de largo `m` que no comparten ni una letra?
 
 ## Comprimiendo el espacio: árboles PATRICIA
 
@@ -410,49 +230,31 @@ Costo de `Pertenece` / `Obtener` / `Insertar` / `Eliminar`, con `n` la cantidad 
 
 El trie es el **único con O(m) en peor caso** para claves string, y además **conserva el orden**. Lo paga en espacio: hasta O(n · m) nodos.
 
-> Tip: si el enunciado habla de **prefijos**, de **autocompletar**, de **claves que empiezan con...**, de **diccionario con comodines** o de **el prefijo común más largo**, pensar en un trie. Si solo hay que preguntar "¿está o no está esta clave exacta?" y la memoria importa, una tabla de hash alcanza y gasta menos.
+> Tip: si el enunciado habla de **prefijos**, de **autocompletar**, de **claves que empiezan con...**, de **diccionarios con comodines** o de **el prefijo común más largo**, pensar en un trie. Si solo hay que preguntar "¿está o no está esta clave exacta?" y la memoria importa, una tabla de hash alcanza y gasta menos.
 
 
 
-# Problemas típicos que se resuelven con un trie
+# Dónde aparecen los tries
 
-Algunos patrones que aparecen una y otra vez (varios están en los ejercicios):
+Algunas situaciones donde un trie es la estructura natural:
 
-- **Autocompletado / sugerencias**: ubicarse en el prefijo y hacer DFS desde ahí. Si el valor es una frecuencia, quedarse con la clave de mayor valor.
-- **Prefijo común más largo** de un conjunto de claves: bajar desde la raíz mientras haya **un único hijo** y el nodo no sea una clave.
-- **Búsqueda con comodín** (`"b.d"` matchea `"bad"`, `"bid"`, ...): cuando el patrón tiene un `'.'`, se prueban **todos** los hijos (backtracking); con una letra común, se sigue por un solo hijo.
-- **Reemplazar palabras por su raíz** más corta: bajar por el trie y cortar en el primer nodo con `hayClave`.
-- **Enrutamiento de IPs** (*longest prefix match*): los routers usan un trie sobre los bits de la dirección IP.
-- **Corrector / verificador de diccionario**: consultas rápidas de palabras válidas.
+- **Autocompletado y sugerencias** en teclados y buscadores, a veces ordenadas por frecuencia de uso.
+- **Correctores y verificadores de diccionario**: consultas rápidas de palabras válidas.
+- **Prefijos compartidos**: encontrar el prefijo común de un conjunto de claves, o agrupar palabras por raíz.
+- **Búsquedas con patrones**, por ejemplo con comodines que reemplazan una letra cualquiera.
+- **Enrutamiento de redes** (*longest prefix match*): los routers usan un trie sobre los bits de la dirección IP para decidir por dónde reenviar un paquete.
+
+> Pregunta para pensar: de la lista anterior, ¿en cuáles el hecho de que el trie conserve el orden alfabético es lo que lo hace útil?
 
 
 
 # Más allá de los strings: tries binarios
 
-Un trie no tiene por qué ser de letras: puede ser de **cualquier secuencia de símbolos**. Un caso muy usado es el **trie binario**, donde Σ = {0, 1}: cada nodo tiene dos hijos (bit `0` y bit `1`) y cada número entero se guarda como el camino de sus bits, del más significativo al menos significativo.
+Un trie no tiene por qué ser de letras: puede construirse sobre **cualquier secuencia de símbolos**. Un caso muy usado es el **trie binario**, donde Σ = {0, 1}: cada nodo tiene a lo sumo dos hijos (bit `0` y bit `1`) y cada número entero se guarda como el camino formado por sus bits, del más significativo al menos significativo.
 
-```cpp
-struct NodoBit {
-    NodoBit* hijo[2];   // hijo[0]: bit 0, hijo[1]: bit 1
-    NodoBit() { hijo[0] = nullptr; hijo[1] = nullptr; }
-};
+Como todos los números de un mismo ancho tienen la misma cantidad de bits, todos los caminos tienen el mismo largo, y las operaciones cuestan O(cantidad de bits), no O(cantidad de números). Esto vuelve útil al trie binario para problemas donde importa **cómo se parecen los números bit a bit**, como los que involucran la operación XOR.
 
-// Insertar un número de 30 bits:
-void insertarNumero(NodoBit* raiz, int x) {
-    NodoBit* nodo = raiz;
-    for (int i = 29; i >= 0; i--) {
-        size_t bit = static_cast<size_t>((x >> i) & 1);   // el bit i-ésimo de x
-        if (nodo->hijo[bit] == nullptr) {
-            nodo->hijo[bit] = new NodoBit();
-        }
-        nodo = nodo->hijo[bit];
-    }
-}
-```
-
-**Aplicación clásica: máximo XOR de un par.** Dado un arreglo, encontrar el mayor `a ^ b`. Probar todos los pares es O(n²). Con un trie binario: para cada `x`, se baja por el trie intentando en cada nivel ir por el bit **opuesto** al de `x` (cada bit en el que difieren aporta un `1` al XOR, y los bits altos pesan más). Si el hijo opuesto no existe, se va por el otro. Total: **O(n · B)**, con `B` la cantidad de bits.
-
-> Pregunta para pensar: ¿por qué es "goloso" elegir siempre el bit opuesto en cada nivel? ¿Por qué un `1` en un bit alto vale más que todos los bits bajos juntos?
+> Pregunta para pensar: en un número binario, ¿por qué un `1` en un bit alto vale más que todos los bits bajos juntos? ¿Qué implica eso para una búsqueda que quiere un resultado lo más grande posible?
 
 
 
@@ -461,14 +263,15 @@ void insertarNumero(NodoBit* raiz, int x) {
 - ¿Por qué un trie le gana a un AVL cuando las claves son strings largas?
 - En un trie, ¿qué invariante evita que un nodo sin hijos sea ambiguo?
 - ¿Por qué un trie puede necesitar más memoria que un ABB o un AVL con las mismas claves?
-- ¿Qué pasa con `tienePrefijo` si `eliminar` no poda las hojas vacías?
+- ¿Qué pasa con la pregunta "¿hay alguna clave con este prefijo?" si el borrado no poda las hojas vacías?
 - ¿Por qué no conviene guardar los hijos en una tabla de hash?
+- ¿Qué diferencia hay entre que exista el camino de un prefijo y que ese prefijo sea una clave?
 
 
 
 # Anexo: Rosetree (árbol n-ario)
 
-El trie es un caso particular de una estructura más general: el **rosetree**, que es un árbol donde cada nodo puede tener cualquier cantidad de hijos. Esta sección repasa la versión genérica.
+El trie es un caso particular de una estructura más general: el **rosetree**, un árbol donde cada nodo puede tener cualquier cantidad de hijos. Esta sección repasa la versión genérica.
 
 ## ¿Qué es un rosetree?
 
@@ -478,74 +281,26 @@ Hasta ahora trabajamos sobre todo con árboles **binarios**, donde cada nodo tie
 
 Es la estructura que usamos naturalmente cuando pensamos en jerarquías: una carpeta que contiene archivos y otras carpetas, un organigrama de una empresa, el árbol genealógico de un torneo, o el árbol de decisiones de un juego.
 
-## Representación en C++ del rosetree
+## Representación del rosetree
 
-En Python uno podría representar un nodo con una lista de hijos sin pensarlo demasiado. En C++, como es un lenguaje de tipado estático, necesitamos definir explícitamente la estructura. Usamos un `struct` con un `std::vector` de punteros a los hijos:
+En C++, como es un lenguaje de tipado estático, hay que definir explícitamente la estructura. Cada nodo guarda un **valor** y un `std::vector` de **punteros a sus hijos** (la definición ya viene dada en los ejercicios).
 
-```cpp
-template <typename T>
-struct Rosetree {
-    T valor;
-    std::vector<Rosetree<T>*> hijos;
-};
-```
+> ¿Por qué un vector de punteros a nodos y no un vector de nodos por valor? Porque el tipo del nodo se está definiendo a sí mismo (es un tipo recursivo). El compilador necesita conocer el tamaño exacto de la estructura, y un vector de punteros tiene tamaño fijo (son direcciones de memoria), mientras que un vector de "nodos por valor" tendría tamaño indefinido.
 
-> ¿Por qué `std::vector<Rosetree<T>*>` y no `std::vector<Rosetree<T>>`? Porque el tipo `Rosetree<T>` se está definiendo a sí mismo (es un tipo recursivo). El compilador necesita conocer el tamaño exacto de la estructura, y un vector de punteros tiene tamaño fijo (son direcciones de memoria), mientras que un vector de "Rosetree por valor" tendría tamaño indefinido.
-
-Crear un nodo hoja y agregarle hijos es directo:
-
-```cpp
-Rosetree<std::string>* raiz = new Rosetree<std::string>{"Documentos", {}};
-Rosetree<std::string>* hijo1 = new Rosetree<std::string>{"Fotos", {}};
-Rosetree<std::string>* hijo2 = new Rosetree<std::string>{"Tesis.pdf", {}};
-
-raiz->hijos.push_back(hijo1);
-raiz->hijos.push_back(hijo2);
-```
+Un nodo hoja es el que tiene el vector de hijos vacío, y el árbol vacío se representa con un puntero nulo.
 
 ## Recorridos y recursión
 
 Un rosetree se recorre de forma muy parecida a un árbol binario, solo que en vez de "visitar izquierda y derecha" hay que **recorrer el vector de hijos**. La receta general de cualquier función recursiva sobre un rosetree es:
 
-1. **Caso base**: el nodo es `nullptr` (árbol vacío) o no tiene hijos (es una hoja).
-2. **Caso recursivo**: procesar el nodo actual y combinar el resultado de aplicar la misma función a cada uno de sus hijos, recorriendo el `std::vector<Rosetree<T>*>` con un `for`.
+1. **Caso base**: el nodo es nulo (árbol vacío) o no tiene hijos (es una hoja).
+2. **Caso recursivo**: procesar el nodo actual y **combinar** el resultado de aplicar la misma función a cada uno de sus hijos.
 
-Por ejemplo, contar la cantidad de nodos de un rosetree:
-
-```cpp
-int contarNodos(Rosetree<int>* nodo) {
-    if (nodo == nullptr) {
-        return 0;
-    }
-    int total = 1; // me cuento a mí mismo
-    for (Rosetree<int>* hijo : nodo->hijos) {
-        total += contarNodos(hijo);
-    }
-    return total;
-}
-```
-
-Calcular la altura es análogo, pero en vez de sumar hay que quedarse con el **máximo** entre los hijos:
-
-```cpp
-int altura(Rosetree<int>* nodo) {
-    if (nodo == nullptr) {
-        return 0;
-    }
-    if (nodo->hijos.empty()) {
-        return 1; // una hoja tiene altura 1
-    }
-    int alturaMax = 0;
-    for (Rosetree<int>* hijo : nodo->hijos) {
-        alturaMax = std::max(alturaMax, altura(hijo));
-    }
-    return 1 + alturaMax;
-}
-```
+La forma de combinar depende de la pregunta. Para contar nodos, se **suma** (1 por el nodo actual más lo que devuelve cada hijo). Para calcular la altura, se toma el **máximo** entre los hijos y se suma 1.
 
 > Pregunta para pensar: en un árbol binario la recursión hace dos llamados (izquierda y derecha). En un rosetree, ¿cuántos llamados recursivos se hacen? ¿Depende del nodo?
 
-> Pregunta para pensar: ¿cómo cambiaría `contarNodos` si quisiéramos contar solamente las **hojas** del árbol?
+> Pregunta para pensar: ¿cómo cambiaría la función que cuenta nodos si quisiéramos contar solamente las **hojas** del árbol?
 
 ## Ejemplos donde aparece naturalmente
 
@@ -564,12 +319,12 @@ El rosetree no es una curiosidad teórica: aparece todo el tiempo en problemas r
 
 ## Relación con el trie
 
-Mirá otra vez `NodoTrie`: es un rosetree con dos particularidades.
+Mirá otra vez el nodo del trie: es un rosetree con dos particularidades.
 
 | | Rosetree genérico | Trie |
 |---|---|---|
-| Hijos | `std::vector` de punteros, uno por hijo existente | `std::array` de `\|Σ\|` punteros, indexado por **símbolo** (`nullptr` si no hay) |
-| Dato del nodo | Un `valor` arbitrario | `hayClave` + `valor` (la información principal está en el **camino**) |
-| Qué significa un camino | Una ruta cualquiera | Un prefijo / una clave |
+| Hijos | Un vector con un puntero por cada hijo que existe | Un arreglo de `\|Σ\|` posiciones, indexado por **símbolo** (nulo si no hay) |
+| Dato del nodo | Un valor arbitrario | Una marca de clave y un valor (la información principal está en el **camino**) |
+| Qué significa un camino | Una ruta cualquiera | Un prefijo o una clave |
 
-Por eso las recetas son las mismas: caso base + `for` sobre los hijos + combinar resultados. `contarNodos` del trie es idéntico al del rosetree (salvo que hay que saltear los `nullptr`), y listar claves es un recorrido DFS igual que cualquier otro, solo que arrastrando el camino (los símbolos de las aristas) en un `std::string`.
+Por eso las recetas son las mismas: caso base, recorrer los hijos y combinar resultados. Contar los nodos de un trie es lo mismo que contarlos en un rosetree (salvo que hay que saltear los hijos nulos), y recorrer las claves del trie es un recorrido en profundidad como cualquier otro, solo que arrastrando el camino (los símbolos de las aristas) que se va formando.
