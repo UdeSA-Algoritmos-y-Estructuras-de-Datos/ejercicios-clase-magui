@@ -170,9 +170,9 @@ std::vector<size_t> ordenDeVisitaDFS(const Grafo& g, size_t v)
 }
 
 // Ejercicio 14 — Componentes conexas
-size_t cantidadDeComponentes(const Grafo& g)
+size_t contarComponentes(const Grafo& g)
 {
-    // TODO: implementar cantidadDeComponentes.
+    // TODO: implementar contarComponentes.
     // Se espera la cantidad de componentes conexas. Un grafo sin vértices
     // tiene 0.
     (void)g;
@@ -197,16 +197,7 @@ bool esArbol(const Grafo& g)
     return false;
 }
 
-// Ejercicio 17 — ¿Es bipartito?
-bool esBipartito(const Grafo& g)
-{
-    // TODO: implementar esBipartito.
-    // El grafo puede no ser conexo.
-    (void)g;
-    return false;
-}
-
-// Ejercicio 18 — ¿Hay un ciclo?
+// Ejercicio 17 — ¿Hay un ciclo?
 bool hayCicloDesde(const Grafo& g, size_t v)
 {
     // TODO: implementar hayCicloDesde.
@@ -220,7 +211,7 @@ bool hayCicloDesde(const Grafo& g, size_t v)
 // PARTE 4 — BFS: EL MISMO RECORRIDO, CON UNA COLA
 // ============================================================================
 
-// Ejercicio 19 — Orden de visita del BFS
+// Ejercicio 18 — Orden de visita del BFS
 std::vector<size_t> ordenDeVisitaBFS(const Grafo& g, size_t v)
 {
     // TODO: implementar ordenDeVisitaBFS.
@@ -231,7 +222,7 @@ std::vector<size_t> ordenDeVisitaBFS(const Grafo& g, size_t v)
     return {};
 }
 
-// Ejercicio 20 — Distancias desde un vértice
+// Ejercicio 19 — Distancias desde un vértice
 std::vector<size_t> distanciasDesde(const Grafo& g, size_t v)
 {
     // TODO: implementar distanciasDesde.
@@ -242,7 +233,7 @@ std::vector<size_t> distanciasDesde(const Grafo& g, size_t v)
     return {};
 }
 
-// Ejercicio 21 — Camino más corto
+// Ejercicio 20 — Camino más corto
 std::vector<size_t> caminoMasCorto(const Grafo& g, size_t v, size_t w)
 {
     // TODO: implementar caminoMasCorto.
@@ -253,7 +244,7 @@ std::vector<size_t> caminoMasCorto(const Grafo& g, size_t v, size_t w)
     return {};
 }
 
-// Ejercicio 22 — Vértices a distancia k
+// Ejercicio 21 — Vértices a distancia k
 std::vector<size_t> verticesADistancia(const Grafo& g, size_t v, size_t k)
 {
     // TODO: implementar verticesADistancia.
@@ -263,4 +254,13 @@ std::vector<size_t> verticesADistancia(const Grafo& g, size_t v, size_t k)
     (void)v;
     (void)k;
     return {};
+}
+
+// Ejercicio 22 — ¿Es bipartito?
+bool esBipartito(const Grafo& g)
+{
+    // TODO: implementar esBipartito.
+    // El grafo puede no ser conexo.
+    (void)g;
+    return false;
 }

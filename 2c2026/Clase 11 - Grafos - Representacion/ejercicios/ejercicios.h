@@ -25,7 +25,8 @@ const size_t NO_ALCANZABLE = static_cast<size_t>(-1);
 //   - Parte 2: problemas sobre la representación (grado, invariante,
 //              vecinos).
 //   - Parte 3: alcanzabilidad con DFS y problemas que se resuelven con él.
-//   - Parte 4: BFS (el mismo recorrido con una cola) y distancias mínimas.
+//   - Parte 4: BFS (el mismo recorrido con una cola): distancias mínimas y
+//              2-coloreo.
 //
 // Convención de la teórica: los vértices de un grafo con n vértices son
 // 0, 1, ..., n - 1. Toda precondición que mencione a un vértice v o w incluye,
@@ -190,7 +191,7 @@ std::vector<size_t> ordenDeVisitaDFS(const Grafo& g, size_t v);
 // Pista: recorrer todos los vértices; cada vez que aparece uno sin visitar,
 // es una componente nueva: se recorre (con DFS) todo lo alcanzable desde él.
 // Complejidad: O(n + m).
-size_t cantidadDeComponentes(const Grafo& g);
+size_t contarComponentes(const Grafo& g);
 
 // Ejercicio 15 — ¿Es conexo?
 // Devuelve true si para todo par de vértices hay un camino entre ellos.
@@ -207,18 +208,7 @@ bool esConexo(const Grafo& g);
 // Complejidad: O(n + m).
 bool esArbol(const Grafo& g);
 
-// Ejercicio 17 — ¿Es bipartito?
-// Devuelve true si los vértices se pueden partir en dos conjuntos tales que
-// toda arista une un vértice de cada uno (es decir, si g admite un
-// 2-coloreo). El grafo puede no ser conexo.
-// Pista: pintá un vértice de un color; eso obliga a pintar a sus vecinos del
-// otro color, a los vecinos de esos del primero, y así. Si alguna arista une
-// dos vértices del mismo color, no es bipartito. Hacelo con una pila, como
-// el DFS, y repetí desde cada vértice todavía sin pintar.
-// Complejidad: O(n + m).
-bool esBipartito(const Grafo& g);
-
-// Ejercicio 18 — ¿Hay un ciclo?
+// Ejercicio 17 — ¿Hay un ciclo?
 // Devuelve true si hay algún CICLO entre los vértices alcanzables desde v
 // (es decir, en la componente conexa de v; un ciclo en otra componente no
 // cuenta).
@@ -246,7 +236,7 @@ bool hayCicloDesde(const Grafo& g, size_t v);
 // distancia[y] = distancia[x] + 1, con x el vértice que se está procesando.
 // ============================================================================
 
-// Ejercicio 19 — Orden de visita del BFS
+// Ejercicio 18 — Orden de visita del BFS
 // Devuelve los vértices alcanzables desde v en el orden en que el BFS los
 // SACA de la cola (el primero es v). Los vecinos de x se encolan en el
 // orden en que aparecen en g.ady[x].
@@ -255,7 +245,7 @@ bool hayCicloDesde(const Grafo& g, size_t v);
 // Complejidad: O(n + m).
 std::vector<size_t> ordenDeVisitaBFS(const Grafo& g, size_t v);
 
-// Ejercicio 20 — Distancias desde un vértice
+// Ejercicio 19 — Distancias desde un vértice
 // Devuelve un vector de n posiciones: la posición w tiene la distancia
 // MÍNIMA de v a w, en cantidad de aristas (0 para v mismo). Para los
 // vértices que no son alcanzables desde v, NO_ALCANZABLE.
@@ -263,7 +253,7 @@ std::vector<size_t> ordenDeVisitaBFS(const Grafo& g, size_t v);
 // Complejidad: O(n + m).
 std::vector<size_t> distanciasDesde(const Grafo& g, size_t v);
 
-// Ejercicio 21 — Camino más corto
+// Ejercicio 20 — Camino más corto
 // Devuelve un camino de v a w con la MENOR cantidad de aristas, como la
 // secuencia de vértices por los que pasa: el primero es v y el último es w.
 // Si v == w, es {v}. Si w no es alcanzable desde v, devuelve un vector vacío.
@@ -274,11 +264,24 @@ std::vector<size_t> distanciasDesde(const Grafo& g, size_t v);
 // Complejidad: O(n + m).
 std::vector<size_t> caminoMasCorto(const Grafo& g, size_t v, size_t w);
 
-// Ejercicio 22 — Vértices a distancia k
+// Ejercicio 21 — Vértices a distancia k
 // Devuelve los vértices cuya distancia mínima a v es EXACTAMENTE k, en orden
 // creciente. (Con k = 0, es {v}.)
 // Ejemplo (grafo del DFS de la teórica): desde 0, con k = 3 -> {3, 4, 7}.
 // Complejidad: O(n + m).
 std::vector<size_t> verticesADistancia(const Grafo& g, size_t v, size_t k);
+
+// Ejercicio 22 — ¿Es bipartito?
+// Devuelve true si los vértices se pueden partir en dos conjuntos tales que
+// toda arista une un vértice de cada uno (es decir, si g admite un
+// 2-coloreo). El grafo puede no ser conexo.
+// Pista: pintá un vértice de un color; eso obliga a pintar a sus vecinos del
+// otro color, a los vecinos de esos del primero, y así. Hacelo con un BFS:
+// cada vértice que se descubre se pinta del color contrario al del vértice
+// que lo descubrió (los niveles pares de un color, los impares del otro).
+// Si alguna arista une dos vértices del mismo color, no es bipartito. Repetí
+// desde cada vértice todavía sin pintar.
+// Complejidad: O(n + m).
+bool esBipartito(const Grafo& g);
 
 #endif

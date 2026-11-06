@@ -604,28 +604,28 @@ int main()
     }
 
     // ========================================================================
-    // Ejercicio 14 — cantidadDeComponentes
+    // Ejercicio 14 — contarComponentes
     // ========================================================================
     {
-        chequear("Ej14 - cantidadDeComponentes (sin vértices)", cantidadDeComponentes(listasDe(0, {})) == 0);
-        chequear("Ej14 - cantidadDeComponentes (un vértice)", cantidadDeComponentes(listasDe(1, {})) == 1);
-        chequear("Ej14 - cantidadDeComponentes (sin aristas: una por vértice)", cantidadDeComponentes(listasDe(5, {})) == 5);
-        chequear("Ej14 - cantidadDeComponentes (grafo conexo)", cantidadDeComponentes(listasDe(N_DFS, DFS)) == 1);
-        chequear("Ej14 - cantidadDeComponentes (grafo de ejemplo de la clase 16)",
-                 cantidadDeComponentes(listasDe(N_EJEMPLO, EJEMPLO)) == 1);
+        chequear("Ej14 - contarComponentes (sin vértices)", contarComponentes(listasDe(0, {})) == 0);
+        chequear("Ej14 - contarComponentes (un vértice)", contarComponentes(listasDe(1, {})) == 1);
+        chequear("Ej14 - contarComponentes (sin aristas: una por vértice)", contarComponentes(listasDe(5, {})) == 5);
+        chequear("Ej14 - contarComponentes (grafo conexo)", contarComponentes(listasDe(N_DFS, DFS)) == 1);
+        chequear("Ej14 - contarComponentes (grafo de ejemplo de la clase 16)",
+                 contarComponentes(listasDe(N_EJEMPLO, EJEMPLO)) == 1);
         // Como el de la teórica: {0,...,4}, {5, 6} y {7}.
-        chequear("Ej14 - cantidadDeComponentes (3 componentes)",
-                 cantidadDeComponentes(listasDe(8, {{0, 1}, {1, 2}, {0, 3}, {3, 4}, {5, 6}})) == 3);
-        chequear("Ej14 - cantidadDeComponentes (dos triángulos)",
-                 cantidadDeComponentes(listasDe(6, {{0, 1}, {1, 2}, {0, 2}, {3, 4}, {4, 5}, {3, 5}})) == 2);
+        chequear("Ej14 - contarComponentes (3 componentes)",
+                 contarComponentes(listasDe(8, {{0, 1}, {1, 2}, {0, 3}, {3, 4}, {5, 6}})) == 3);
+        chequear("Ej14 - contarComponentes (dos triángulos)",
+                 contarComponentes(listasDe(6, {{0, 1}, {1, 2}, {0, 2}, {3, 4}, {4, 5}, {3, 5}})) == 2);
 
         bool alAzar = true;
         for (unsigned int s = 1; s <= 30; s++) {
             size_t n = 1 + s % 20;
             std::vector<Arista> ar = aristasAleatorias(n, n * (s % 3), s);
-            if (cantidadDeComponentes(listasDe(n, ar)) != componentesDe(n, ar).componentes) alAzar = false;
+            if (contarComponentes(listasDe(n, ar)) != componentesDe(n, ar).componentes) alAzar = false;
         }
-        chequear("Ej14 - cantidadDeComponentes (grafos al azar)", alAzar);
+        chequear("Ej14 - contarComponentes (grafos al azar)", alAzar);
     }
 
     // ========================================================================
@@ -698,85 +698,36 @@ int main()
     }
 
     // ========================================================================
-    // Ejercicio 17 — esBipartito
+    // Ejercicio 17 — hayCicloDesde
     // ========================================================================
     {
-        chequear("Ej17 - esBipartito (sin vértices)", esBipartito(listasDe(0, {})));
-        chequear("Ej17 - esBipartito (sin aristas)", esBipartito(listasDe(4, {})));
-        chequear("Ej17 - esBipartito (una arista)", esBipartito(listasDe(2, {{0, 1}})));
-        chequear("Ej17 - esBipartito (camino)", esBipartito(listasDe(7, aristasCamino(7))));
-        chequear("Ej17 - esBipartito (ciclo par: C4)", esBipartito(listasDe(4, aristasCiclo(4))));
-        chequear("Ej17 - esBipartito (ciclo par: C6)", esBipartito(listasDe(6, aristasCiclo(6))));
-        chequear("Ej17 - esBipartito (ciclo impar: C3 -> no)", !esBipartito(listasDe(3, aristasCiclo(3))));
-        chequear("Ej17 - esBipartito (ciclo impar: C5 -> no)", !esBipartito(listasDe(5, aristasCiclo(5))));
-        chequear("Ej17 - esBipartito (K4 -> no)", !esBipartito(listasDe(4, aristasCompleto(4))));
-        chequear("Ej17 - esBipartito (el grafo de ejemplo de la clase 16 tiene un triángulo -> no)",
-                 !esBipartito(listasDe(N_EJEMPLO, EJEMPLO)));
-        chequear("Ej17 - esBipartito (el grafo del DFS de la teórica: ciclo de 6 -> sí)",
-                 esBipartito(listasDe(N_DFS, DFS)));
-
-        // K_{3,3}: {0,1,2} contra {3,4,5}; y el mismo con una arista dentro de un lado.
-        std::vector<Arista> k33;
-        for (size_t i = 0; i < 3; i++)
-            for (size_t j = 3; j < 6; j++) k33.push_back(Arista(i, j));
-        chequear("Ej17 - esBipartito (K_{3,3})", esBipartito(listasDe(6, k33)));
-        std::vector<Arista> k33Mas = k33;
-        k33Mas.push_back(Arista(0, 1));
-        chequear("Ej17 - esBipartito (K_{3,3} más una arista dentro de un lado -> no)", !esBipartito(listasDe(6, k33Mas)));
-
-        // No conexos: ambas componentes bipartitas / una sola con ciclo impar.
-        chequear("Ej17 - esBipartito (dos componentes bipartitas)",
-                 esBipartito(listasDe(7, {{0, 1}, {1, 2}, {3, 4}, {4, 5}, {5, 6}, {3, 6}})));
-        chequear("Ej17 - esBipartito (la segunda componente tiene un ciclo impar -> no)",
-                 !esBipartito(listasDe(6, {{0, 1}, {3, 4}, {4, 5}, {3, 5}})));
-
-        bool arboles = true;
-        for (unsigned int s = 1; s <= 20; s++) {
-            size_t n = 1 + s % 14;
-            if (!esBipartito(listasDe(n, aristasArbolAleatorio(n, s)))) arboles = false;
-        }
-        chequear("Ej17 - esBipartito (todo árbol es bipartito)", arboles);
-
-        bool alAzar = true;
-        for (unsigned int s = 1; s <= 40; s++) {
-            size_t n = 1 + s % 12;
-            std::vector<Arista> ar = aristasAleatorias(n, n + s % 5, s);
-            if (esBipartito(listasDe(n, ar)) != esBipartitoReferencia(n, ar)) alAzar = false;
-        }
-        chequear("Ej17 - esBipartito (grafos al azar)", alAzar);
-    }
-
-    // ========================================================================
-    // Ejercicio 18 — hayCicloDesde
-    // ========================================================================
-    {
-        chequear("Ej18 - hayCicloDesde (un vértice aislado -> no)", !hayCicloDesde(listasDe(3, {}), 1));
-        chequear("Ej18 - hayCicloDesde (una arista -> no)", !hayCicloDesde(listasDe(2, {{0, 1}}), 0));
-        chequear("Ej18 - hayCicloDesde (camino -> no)", !hayCicloDesde(listasDe(6, aristasCamino(6)), 3));
-        chequear("Ej18 - hayCicloDesde (estrella -> no)", !hayCicloDesde(listasDe(6, aristasEstrella(6)), 4));
-        chequear("Ej18 - hayCicloDesde (triángulo)", hayCicloDesde(listasDe(3, aristasCiclo(3)), 0));
-        chequear("Ej18 - hayCicloDesde (ciclo de 4)", hayCicloDesde(listasDe(4, aristasCiclo(4)), 2));
-        chequear("Ej18 - hayCicloDesde (ciclo de 7)", hayCicloDesde(listasDe(7, aristasCiclo(7)), 5));
-        chequear("Ej18 - hayCicloDesde (K4)", hayCicloDesde(listasDe(4, aristasCompleto(4)), 0));
+        chequear("Ej17 - hayCicloDesde (un vértice aislado -> no)", !hayCicloDesde(listasDe(3, {}), 1));
+        chequear("Ej17 - hayCicloDesde (una arista -> no)", !hayCicloDesde(listasDe(2, {{0, 1}}), 0));
+        chequear("Ej17 - hayCicloDesde (camino -> no)", !hayCicloDesde(listasDe(6, aristasCamino(6)), 3));
+        chequear("Ej17 - hayCicloDesde (estrella -> no)", !hayCicloDesde(listasDe(6, aristasEstrella(6)), 4));
+        chequear("Ej17 - hayCicloDesde (triángulo)", hayCicloDesde(listasDe(3, aristasCiclo(3)), 0));
+        chequear("Ej17 - hayCicloDesde (ciclo de 4)", hayCicloDesde(listasDe(4, aristasCiclo(4)), 2));
+        chequear("Ej17 - hayCicloDesde (ciclo de 7)", hayCicloDesde(listasDe(7, aristasCiclo(7)), 5));
+        chequear("Ej17 - hayCicloDesde (K4)", hayCicloDesde(listasDe(4, aristasCompleto(4)), 0));
 
         Grafo g = listasDe(N_DFS, DFS);
         bool desdeTodos = true;
         for (size_t v = 0; v < N_DFS; v++) {
             if (!hayCicloDesde(g, v)) desdeTodos = false;
         }
-        chequear("Ej18 - hayCicloDesde (grafo del DFS de la teórica: hay un ciclo, desde cualquier vértice)", desdeTodos);
+        chequear("Ej17 - hayCicloDesde (grafo del DFS de la teórica: hay un ciclo, desde cualquier vértice)", desdeTodos);
 
         // Un triángulo {0, 1, 2} con una cola 2-3-4 colgando: desde la punta de la cola también se ve el ciclo.
         Grafo paleta = listasDe(5, {{0, 1}, {1, 2}, {0, 2}, {2, 3}, {3, 4}});
-        chequear("Ej18 - hayCicloDesde (triángulo con cola, desde la punta de la cola)", hayCicloDesde(paleta, 4));
+        chequear("Ej17 - hayCicloDesde (triángulo con cola, desde la punta de la cola)", hayCicloDesde(paleta, 4));
 
         // Un triángulo {0, 1, 2} y un camino {3, 4, 5}: sólo cuenta la componente de v.
         Grafo dos = listasDe(6, {{0, 1}, {1, 2}, {0, 2}, {3, 4}, {4, 5}});
-        chequear("Ej18 - hayCicloDesde (el ciclo está en la componente de v)", hayCicloDesde(dos, 1));
-        chequear("Ej18 - hayCicloDesde (el ciclo está en OTRA componente -> no)", !hayCicloDesde(dos, 3));
+        chequear("Ej17 - hayCicloDesde (el ciclo está en la componente de v)", hayCicloDesde(dos, 1));
+        chequear("Ej17 - hayCicloDesde (el ciclo está en OTRA componente -> no)", !hayCicloDesde(dos, 3));
 
-        chequear("Ej18 - hayCicloDesde (camino de 20000 vértices -> no)", !hayCicloDesde(listasDe(20000, aristasCamino(20000)), 0));
-        chequear("Ej18 - hayCicloDesde (ciclo de 20000 vértices)", hayCicloDesde(listasDe(20000, aristasCiclo(20000)), 0));
+        chequear("Ej17 - hayCicloDesde (camino de 20000 vértices -> no)", !hayCicloDesde(listasDe(20000, aristasCamino(20000)), 0));
+        chequear("Ej17 - hayCicloDesde (ciclo de 20000 vértices)", hayCicloDesde(listasDe(20000, aristasCiclo(20000)), 0));
 
         bool arboles = true;
         for (unsigned int s = 1; s <= 25; s++) {
@@ -786,7 +737,7 @@ int main()
                 if (hayCicloDesde(t, v)) arboles = false;
             }
         }
-        chequear("Ej18 - hayCicloDesde (árboles al azar -> no)", arboles);
+        chequear("Ej17 - hayCicloDesde (árboles al azar -> no)", arboles);
 
         // Referencia: en la componente de v hay un ciclo si y sólo si tiene al menos tantas aristas como vértices.
         bool alAzar = true;
@@ -806,28 +757,28 @@ int main()
                 if (hayCicloDesde(r, v) != (aristas >= vertices)) alAzar = false;
             }
         }
-        chequear("Ej18 - hayCicloDesde (grafos al azar, desde todos los vértices)", alAzar);
+        chequear("Ej17 - hayCicloDesde (grafos al azar, desde todos los vértices)", alAzar);
     }
 
     // ========================================================================
-    // Ejercicio 19 — ordenDeVisitaBFS
+    // Ejercicio 18 — ordenDeVisitaBFS
     // ========================================================================
     {
         Grafo g = listasDe(N_DFS, DFS);
-        chequear("Ej19 - ordenDeVisitaBFS (grafo del DFS de la teórica, desde 0)",
+        chequear("Ej18 - ordenDeVisitaBFS (grafo del DFS de la teórica, desde 0)",
                  ordenDeVisitaBFS(g, 0) == Vertices({0, 1, 5, 2, 6, 3, 4, 7}));
-        chequear("Ej19 - ordenDeVisitaBFS (desde 7)",
+        chequear("Ej18 - ordenDeVisitaBFS (desde 7)",
                  ordenDeVisitaBFS(g, 7) == Vertices({7, 6, 4, 5, 2, 0, 1, 3}));
 
         Grafo cam = listasDe(4, aristasCamino(4));
-        chequear("Ej19 - ordenDeVisitaBFS (camino, desde un extremo)", ordenDeVisitaBFS(cam, 0) == Vertices({0, 1, 2, 3}));
-        chequear("Ej19 - ordenDeVisitaBFS (camino, desde un vértice del medio)", ordenDeVisitaBFS(cam, 1) == Vertices({1, 0, 2, 3}));
-        chequear("Ej19 - ordenDeVisitaBFS (estrella, desde el centro)",
+        chequear("Ej18 - ordenDeVisitaBFS (camino, desde un extremo)", ordenDeVisitaBFS(cam, 0) == Vertices({0, 1, 2, 3}));
+        chequear("Ej18 - ordenDeVisitaBFS (camino, desde un vértice del medio)", ordenDeVisitaBFS(cam, 1) == Vertices({1, 0, 2, 3}));
+        chequear("Ej18 - ordenDeVisitaBFS (estrella, desde el centro)",
                  ordenDeVisitaBFS(listasDe(5, aristasEstrella(5)), 0) == Vertices({0, 1, 2, 3, 4}));
 
         Grafo dos = listasDe(5, {{0, 1}, {3, 4}});
-        chequear("Ej19 - ordenDeVisitaBFS (sólo los alcanzables)", ordenDeVisitaBFS(dos, 3) == Vertices({3, 4}));
-        chequear("Ej19 - ordenDeVisitaBFS (vértice aislado)", ordenDeVisitaBFS(dos, 2) == Vertices({2}));
+        chequear("Ej18 - ordenDeVisitaBFS (sólo los alcanzables)", ordenDeVisitaBFS(dos, 3) == Vertices({3, 4}));
+        chequear("Ej18 - ordenDeVisitaBFS (vértice aislado)", ordenDeVisitaBFS(dos, 2) == Vertices({2}));
 
         bool alAzar = true;
         for (unsigned int s = 1; s <= 20; s++) {
@@ -849,33 +800,33 @@ int main()
                 }
             }
         }
-        chequear("Ej19 - ordenDeVisitaBFS (grafos al azar: por niveles, sin repetidos)", alAzar);
+        chequear("Ej18 - ordenDeVisitaBFS (grafos al azar: por niveles, sin repetidos)", alAzar);
     }
 
     // ========================================================================
-    // Ejercicio 20 — distanciasDesde
+    // Ejercicio 19 — distanciasDesde
     // ========================================================================
     {
         Grafo g = listasDe(N_DFS, DFS);
-        chequear("Ej20 - distanciasDesde (grafo del DFS de la teórica, desde 0)",
+        chequear("Ej19 - distanciasDesde (grafo del DFS de la teórica, desde 0)",
                  distanciasDesde(g, 0) == Vertices({0, 1, 2, 3, 3, 1, 2, 3}));
-        chequear("Ej20 - distanciasDesde (desde 7)",
+        chequear("Ej19 - distanciasDesde (desde 7)",
                  distanciasDesde(g, 7) == Vertices({3, 4, 3, 4, 2, 2, 1, 0}));
-        chequear("Ej20 - distanciasDesde (camino de 5 vértices, desde el medio)",
+        chequear("Ej19 - distanciasDesde (camino de 5 vértices, desde el medio)",
                  distanciasDesde(listasDe(5, aristasCamino(5)), 2) == Vertices({2, 1, 0, 1, 2}));
 
         Grafo dos = listasDe(5, {{0, 1}, {3, 4}});
-        chequear("Ej20 - distanciasDesde (los que no se alcanzan: NO_ALCANZABLE)",
+        chequear("Ej19 - distanciasDesde (los que no se alcanzan: NO_ALCANZABLE)",
                  distanciasDesde(dos, 0) == Vertices({0, 1, NO_ALCANZABLE, NO_ALCANZABLE, NO_ALCANZABLE}));
-        chequear("Ej20 - distanciasDesde (vértice aislado)",
+        chequear("Ej19 - distanciasDesde (vértice aislado)",
                  distanciasDesde(dos, 2) == Vertices({NO_ALCANZABLE, NO_ALCANZABLE, 0, NO_ALCANZABLE, NO_ALCANZABLE}));
 
         // El DFS encuentra un camino, pero no necesariamente el más corto: en un ciclo de 6, el 3 está a distancia 3.
-        chequear("Ej20 - distanciasDesde (ciclo de 6: se elige el lado más corto)",
+        chequear("Ej19 - distanciasDesde (ciclo de 6: se elige el lado más corto)",
                  distanciasDesde(listasDe(6, aristasCiclo(6)), 0) == Vertices({0, 1, 2, 3, 2, 1}));
 
         Grafo largo = listasDe(20000, aristasCamino(20000));
-        chequear("Ej20 - distanciasDesde (camino de 20000 vértices)", distanciasDesde(largo, 0)[19999] == 19999);
+        chequear("Ej19 - distanciasDesde (camino de 20000 vértices)", distanciasDesde(largo, 0)[19999] == 19999);
 
         bool alAzar = true;
         for (unsigned int s = 1; s <= 30; s++) {
@@ -886,27 +837,27 @@ int main()
                 if (distanciasDesde(r, v) != distanciasReferencia(n, ar, v)) alAzar = false;
             }
         }
-        chequear("Ej20 - distanciasDesde (grafos al azar, desde todos los vértices)", alAzar);
+        chequear("Ej19 - distanciasDesde (grafos al azar, desde todos los vértices)", alAzar);
     }
 
     // ========================================================================
-    // Ejercicio 21 — caminoMasCorto
+    // Ejercicio 20 — caminoMasCorto
     // ========================================================================
     {
         Grafo g = listasDe(N_DFS, DFS);
         // Un único camino mínimo entre 0 y 3 (0-1-2-3, de longitud 3; el otro lado del ciclo mide 5).
-        chequear("Ej21 - caminoMasCorto (de 0 a 3 en el grafo del DFS de la teórica)",
+        chequear("Ej20 - caminoMasCorto (de 0 a 3 en el grafo del DFS de la teórica)",
                  caminoMasCorto(g, 0, 3) == Vertices({0, 1, 2, 3}));
-        chequear("Ej21 - caminoMasCorto (de 3 a 0)", caminoMasCorto(g, 3, 0) == Vertices({3, 2, 1, 0}));
-        chequear("Ej21 - caminoMasCorto (v == w)", caminoMasCorto(g, 4, 4) == Vertices({4}));
-        chequear("Ej21 - caminoMasCorto (v y w vecinos)", caminoMasCorto(g, 6, 7) == Vertices({6, 7}));
+        chequear("Ej20 - caminoMasCorto (de 3 a 0)", caminoMasCorto(g, 3, 0) == Vertices({3, 2, 1, 0}));
+        chequear("Ej20 - caminoMasCorto (v == w)", caminoMasCorto(g, 4, 4) == Vertices({4}));
+        chequear("Ej20 - caminoMasCorto (v y w vecinos)", caminoMasCorto(g, 6, 7) == Vertices({6, 7}));
 
         Grafo dos = listasDe(5, {{0, 1}, {3, 4}});
-        chequear("Ej21 - caminoMasCorto (no hay camino -> vacío)",
+        chequear("Ej20 - caminoMasCorto (no hay camino -> vacío)",
                  caminoMasCorto(dos, 0, 3).empty() && caminoMasCorto(dos, 2, 0).empty());
-        chequear("Ej21 - caminoMasCorto (vértice aislado a sí mismo)", caminoMasCorto(dos, 2, 2) == Vertices({2}));
+        chequear("Ej20 - caminoMasCorto (vértice aislado a sí mismo)", caminoMasCorto(dos, 2, 2) == Vertices({2}));
 
-        chequear("Ej21 - caminoMasCorto (camino de 20000 vértices)",
+        chequear("Ej20 - caminoMasCorto (camino de 20000 vértices)",
                  caminoMasCorto(listasDe(20000, aristasCamino(20000)), 0, 19999).size() == 20000);
 
         // En grafos al azar hay varios caminos mínimos posibles: se chequea que sea un camino válido y de longitud mínima.
@@ -935,22 +886,22 @@ int main()
                 }
             }
         }
-        chequear("Ej21 - caminoMasCorto (grafos al azar: camino válido y de longitud mínima)", alAzar);
+        chequear("Ej20 - caminoMasCorto (grafos al azar: camino válido y de longitud mínima)", alAzar);
     }
 
     // ========================================================================
-    // Ejercicio 22 — verticesADistancia
+    // Ejercicio 21 — verticesADistancia
     // ========================================================================
     {
         Grafo g = listasDe(N_DFS, DFS);
-        chequear("Ej22 - verticesADistancia (k = 0 es el propio vértice)", verticesADistancia(g, 0, 0) == Vertices({0}));
-        chequear("Ej22 - verticesADistancia (k = 1: los vecinos)", verticesADistancia(g, 0, 1) == Vertices({1, 5}));
-        chequear("Ej22 - verticesADistancia (k = 2)", verticesADistancia(g, 0, 2) == Vertices({2, 6}));
-        chequear("Ej22 - verticesADistancia (k = 3)", verticesADistancia(g, 0, 3) == Vertices({3, 4, 7}));
-        chequear("Ej22 - verticesADistancia (k demasiado grande -> vacío)", verticesADistancia(g, 0, 4).empty());
-        chequear("Ej22 - verticesADistancia (estrella, desde una hoja, k = 2)",
+        chequear("Ej21 - verticesADistancia (k = 0 es el propio vértice)", verticesADistancia(g, 0, 0) == Vertices({0}));
+        chequear("Ej21 - verticesADistancia (k = 1: los vecinos)", verticesADistancia(g, 0, 1) == Vertices({1, 5}));
+        chequear("Ej21 - verticesADistancia (k = 2)", verticesADistancia(g, 0, 2) == Vertices({2, 6}));
+        chequear("Ej21 - verticesADistancia (k = 3)", verticesADistancia(g, 0, 3) == Vertices({3, 4, 7}));
+        chequear("Ej21 - verticesADistancia (k demasiado grande -> vacío)", verticesADistancia(g, 0, 4).empty());
+        chequear("Ej21 - verticesADistancia (estrella, desde una hoja, k = 2)",
                  verticesADistancia(listasDe(5, aristasEstrella(5)), 1, 2) == Vertices({2, 3, 4}));
-        chequear("Ej22 - verticesADistancia (no cuenta a los inalcanzables)",
+        chequear("Ej21 - verticesADistancia (no cuenta a los inalcanzables)",
                  verticesADistancia(listasDe(5, {{0, 1}, {3, 4}}), 0, 1) == Vertices({1}));
 
         bool alAzar = true;
@@ -967,7 +918,56 @@ int main()
                 if (verticesADistancia(r, 0, k) != esperado) alAzar = false;
             }
         }
-        chequear("Ej22 - verticesADistancia (grafos al azar, todos los k)", alAzar);
+        chequear("Ej21 - verticesADistancia (grafos al azar, todos los k)", alAzar);
+    }
+
+    // ========================================================================
+    // Ejercicio 22 — esBipartito
+    // ========================================================================
+    {
+        chequear("Ej22 - esBipartito (sin vértices)", esBipartito(listasDe(0, {})));
+        chequear("Ej22 - esBipartito (sin aristas)", esBipartito(listasDe(4, {})));
+        chequear("Ej22 - esBipartito (una arista)", esBipartito(listasDe(2, {{0, 1}})));
+        chequear("Ej22 - esBipartito (camino)", esBipartito(listasDe(7, aristasCamino(7))));
+        chequear("Ej22 - esBipartito (ciclo par: C4)", esBipartito(listasDe(4, aristasCiclo(4))));
+        chequear("Ej22 - esBipartito (ciclo par: C6)", esBipartito(listasDe(6, aristasCiclo(6))));
+        chequear("Ej22 - esBipartito (ciclo impar: C3 -> no)", !esBipartito(listasDe(3, aristasCiclo(3))));
+        chequear("Ej22 - esBipartito (ciclo impar: C5 -> no)", !esBipartito(listasDe(5, aristasCiclo(5))));
+        chequear("Ej22 - esBipartito (K4 -> no)", !esBipartito(listasDe(4, aristasCompleto(4))));
+        chequear("Ej22 - esBipartito (el grafo de ejemplo de la clase 16 tiene un triángulo -> no)",
+                 !esBipartito(listasDe(N_EJEMPLO, EJEMPLO)));
+        chequear("Ej22 - esBipartito (el grafo del DFS de la teórica: ciclo de 6 -> sí)",
+                 esBipartito(listasDe(N_DFS, DFS)));
+
+        // K_{3,3}: {0,1,2} contra {3,4,5}; y el mismo con una arista dentro de un lado.
+        std::vector<Arista> k33;
+        for (size_t i = 0; i < 3; i++)
+            for (size_t j = 3; j < 6; j++) k33.push_back(Arista(i, j));
+        chequear("Ej22 - esBipartito (K_{3,3})", esBipartito(listasDe(6, k33)));
+        std::vector<Arista> k33Mas = k33;
+        k33Mas.push_back(Arista(0, 1));
+        chequear("Ej22 - esBipartito (K_{3,3} más una arista dentro de un lado -> no)", !esBipartito(listasDe(6, k33Mas)));
+
+        // No conexos: ambas componentes bipartitas / una sola con ciclo impar.
+        chequear("Ej22 - esBipartito (dos componentes bipartitas)",
+                 esBipartito(listasDe(7, {{0, 1}, {1, 2}, {3, 4}, {4, 5}, {5, 6}, {3, 6}})));
+        chequear("Ej22 - esBipartito (la segunda componente tiene un ciclo impar -> no)",
+                 !esBipartito(listasDe(6, {{0, 1}, {3, 4}, {4, 5}, {3, 5}})));
+
+        bool arboles = true;
+        for (unsigned int s = 1; s <= 20; s++) {
+            size_t n = 1 + s % 14;
+            if (!esBipartito(listasDe(n, aristasArbolAleatorio(n, s)))) arboles = false;
+        }
+        chequear("Ej22 - esBipartito (todo árbol es bipartito)", arboles);
+
+        bool alAzar = true;
+        for (unsigned int s = 1; s <= 40; s++) {
+            size_t n = 1 + s % 12;
+            std::vector<Arista> ar = aristasAleatorias(n, n + s % 5, s);
+            if (esBipartito(listasDe(n, ar)) != esBipartitoReferencia(n, ar)) alAzar = false;
+        }
+        chequear("Ej22 - esBipartito (grafos al azar)", alAzar);
     }
 
     // ========================================================================

@@ -36,6 +36,7 @@ Tutorial 11 – Grafos: Representación
   - [La idea: cambiar la pila por una cola](#la-idea-cambiar-la-pila-por-una-cola)
   - [El mismo ejemplo, con BFS](#el-mismo-ejemplo-con-bfs)
   - [Distancias y caminos más cortos](#distancias-y-caminos-más-cortos)
+  - [¿Es bipartito? El 2-coloreo con BFS](#es-bipartito-el-2-coloreo-con-bfs)
   - [DFS vs BFS](#dfs-vs-bfs)
 - [Repaso relámpago](#repaso-relámpago)
 - [Próximamente](#próximamente)
@@ -458,7 +459,6 @@ Una vez que sabemos recorrer todo lo alcanzable desde un vértice, varios proble
 - **Conexo.** Un grafo (con al menos un vértice) es conexo si y sólo si tiene **una única** componente conexa.
 - **¿Es un árbol?** Usando la caracterización: es conexo **y** tiene exactamente `n - 1` aristas. La cantidad de aristas sale de la propiedad de los grados: `m` es la suma de los grados dividida por 2.
 - **¿Hay un ciclo?** (en la componente del vértice de partida). En un **árbol**, cada vértice se apila **una sola vez**: lo apila su padre, que es el único vecino que ya fue visitado cuando le toca. Entonces, si al sacar un vértice de la pila **ya estaba visitado**, es porque alguien más también lo apiló: hay un ciclo. Es la misma "repetición" de la que hablamos antes, vista como una señal. Otra forma es llevar la cuenta de quién es el **padre** de cada vértice y buscar un vecino ya visitado que **no** sea el padre (el padre sí es un vecino visitado, pero esa es la arista por la que llegamos, no un ciclo). Y una tercera, por conteo: una componente con `k` vértices es un árbol si tiene exactamente `k - 1` aristas, así que con `k` o más aristas hay un ciclo.
-- **¿Es bipartito?** El 2-coloreo de la sección anterior se hace con el mismo esquema: una pila, y en vez de "marcar como visitado" se **pinta** al vecino del color contrario al del vértice actual. Si un vecino ya está pintado del **mismo** color, no es bipartito. Como el grafo puede no ser conexo, hay que repetirlo desde cada vértice todavía sin pintar.
 
 > Pregunta para pensar: ¿por qué esos problemas no necesitan guardar el camino ni la distancia? ¿Qué información extra necesitaríamos si quisiéramos devolver **un** camino de `v` a `w`, y no sólo si existe?
 
@@ -522,6 +522,18 @@ La **distancia** entre `v` y `w` es la longitud del **camino más corto** entre 
 
 **Costo.** Igual que DFS: cada vértice entra y sale de la cola una vez, y cada lista de vecinos se recorre una vez, así que con listas de adyacencia es **O(n + m)**, y con matriz de adyacencia **O(n²)**.
 
+## ¿Es bipartito? El 2-coloreo con BFS
+
+El BFS es la herramienta natural para el 2-coloreo, porque ya organiza los vértices **por niveles**. La idea: el vértice de partida se pinta de un color; sus vecinos (nivel 1) del color contrario; los vecinos de esos (nivel 2) del primero; y así, **alternando**. En otras palabras, cada vértice descubierto se pinta del color contrario al del vértice que lo descubrió: los niveles pares quedan de un color y los impares, del otro.
+
+Mientras se recorre, para cada vecino de un vértice pueden pasar dos cosas:
+
+- Si todavía **no está pintado**, se lo pinta del color contrario y se lo encola.
+- Si **ya está pintado** y tiene el color **contrario**, está todo bien: es lo que se espera.
+- Si **ya está pintado** y tiene el **mismo** color que el vértice actual, hay una arista entre dos vértices del mismo color: el grafo **no es bipartito**. (Eso pasa justamente cuando hay un ciclo de longitud impar.)
+
+Si el recorrido termina sin conflictos, el coloreo encontrado es válido y el grafo es bipartito. Como el grafo puede **no ser conexo**, hay que repetir el proceso desde cada vértice todavía sin pintar (igual que con las componentes conexas). Cada vértice se pinta una vez y cada lista de vecinos se recorre una vez: **O(n + m)**.
+
 ## DFS vs BFS
 
 | | DFS | BFS |
@@ -532,7 +544,7 @@ La **distancia** entre `v` y `w` es la longitud del **camino más corto** entre 
 | ¿Camino más corto? | No: encuentra *un* camino, no necesariamente el más corto | **Sí**: en grafos sin pesos, el primer camino que llega a cada vértice es de los más cortos |
 | Costo (listas / matriz) | O(n + m) / O(n²) | O(n + m) / O(n²) |
 
-En el ejemplo, DFS llegó al 3 pasando por `0, 5, 6, 4, 2, 3` (5 aristas), pero el camino más corto es `0, 1, 2, 3` (3 aristas): BFS lo encuentra, DFS no lo garantiza. Para saber **si hay** un camino (alcanzabilidad), componentes conexas, conexidad, árboles o bipartitos, **cualquiera de los dos sirve**; para **distancias y caminos más cortos**, se usa BFS.
+En el ejemplo, DFS llegó al 3 pasando por `0, 5, 6, 4, 2, 3` (5 aristas), pero el camino más corto es `0, 1, 2, 3` (3 aristas): BFS lo encuentra, DFS no lo garantiza. Para saber **si hay** un camino (alcanzabilidad), componentes conexas, conexidad, árboles o bipartitos, **cualquiera de los dos sirve** (en los ejercicios, el 2-coloreo se hace con BFS, porque los niveles se alternan solos); para **distancias y caminos más cortos**, se usa BFS.
 
 
 
@@ -565,5 +577,5 @@ Los ejercicios de esta clase (en la carpeta `ejercicios`) siguen el mismo orden 
 
 - **Parte 1**: el TAD Grafo, operación por operación, con **listas de adyacencia**. La idea es ver con las manos por qué cada operación cuesta lo que cuesta.
 - **Parte 2**: trabajar con la representación: cantidad de aristas a partir de los grados, grafos completos, vecinos en común, chequear el invariante de representación y calcular grados de entrada en un grafo dirigido.
-- **Parte 3**: alcanzabilidad con **DFS** y una pila explícita, y los problemas que se resuelven con ese recorrido: componentes conexas, conexidad, árboles, ciclos y grafos bipartitos.
-- **Parte 4**: **BFS** con una cola: orden de visita, distancias mínimas, camino más corto y vértices a distancia `k`.
+- **Parte 3**: alcanzabilidad con **DFS** y una pila explícita, y los problemas que se resuelven con ese recorrido: componentes conexas, conexidad, árboles y ciclos.
+- **Parte 4**: **BFS** con una cola: orden de visita, distancias mínimas, camino más corto, vértices a distancia `k` y 2-coloreo (grafos bipartitos).
