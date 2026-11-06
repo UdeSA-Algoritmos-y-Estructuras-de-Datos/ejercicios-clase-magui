@@ -29,10 +29,12 @@ Grafo grafoSinAristas(size_t n)
 {
     // TODO: implementar grafoSinAristas.
     // Se espera un grafo con n vértices y n listas de vecinos vacías.
+    //
+    // Pista: para crear un vector de vectores con n vectores vacíos se puede
+    // usar el constructor vector<T>(n), que crea n elementos por defecto:
+    //     std::vector<std::vector<size_t>>(n)
+    // (también sirve g.ady.resize(n)).
     (void)n;
-    Grafo g;
-    g.n = 0;
-    return g;
 }
 
 // Ejercicio 2 — CantidadDeVertices
