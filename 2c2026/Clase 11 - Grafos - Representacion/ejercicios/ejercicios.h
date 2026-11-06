@@ -218,6 +218,19 @@ bool esArbol(const Grafo& g);
 // Complejidad: O(n + m).
 bool esBipartito(const Grafo& g);
 
+// Ejercicio 18 — ¿Hay un ciclo?
+// Devuelve true si hay algún CICLO entre los vértices alcanzables desde v
+// (es decir, en la componente conexa de v; un ciclo en otra componente no
+// cuenta).
+// Pista: pensá en el DFS de la teórica. Un vértice puede quedar REPETIDO en
+// la pila. ¿En un árbol puede pasar? ¿Y si el grafo tiene un ciclo? (Otra
+// forma de resolverlo: un DFS que se acuerde de quién es el "padre" de cada
+// vértice, y detecte un vecino ya visitado que no sea el padre.)
+// Ejemplos: un árbol -> false; un triángulo -> true; un triángulo con una
+// cola colgando, desde un vértice de la cola -> true.
+// Complejidad: O(n + m).
+bool hayCicloDesde(const Grafo& g, size_t v);
+
 // ============================================================================
 // PARTE 4 — BFS: EL MISMO RECORRIDO, CON UNA COLA
 //
@@ -233,7 +246,7 @@ bool esBipartito(const Grafo& g);
 // distancia[y] = distancia[x] + 1, con x el vértice que se está procesando.
 // ============================================================================
 
-// Ejercicio 18 — Orden de visita del BFS
+// Ejercicio 19 — Orden de visita del BFS
 // Devuelve los vértices alcanzables desde v en el orden en que el BFS los
 // SACA de la cola (el primero es v). Los vecinos de x se encolan en el
 // orden en que aparecen en g.ady[x].
@@ -242,7 +255,7 @@ bool esBipartito(const Grafo& g);
 // Complejidad: O(n + m).
 std::vector<size_t> ordenDeVisitaBFS(const Grafo& g, size_t v);
 
-// Ejercicio 19 — Distancias desde un vértice
+// Ejercicio 20 — Distancias desde un vértice
 // Devuelve un vector de n posiciones: la posición w tiene la distancia
 // MÍNIMA de v a w, en cantidad de aristas (0 para v mismo). Para los
 // vértices que no son alcanzables desde v, NO_ALCANZABLE.
@@ -250,7 +263,7 @@ std::vector<size_t> ordenDeVisitaBFS(const Grafo& g, size_t v);
 // Complejidad: O(n + m).
 std::vector<size_t> distanciasDesde(const Grafo& g, size_t v);
 
-// Ejercicio 20 — Camino más corto
+// Ejercicio 21 — Camino más corto
 // Devuelve un camino de v a w con la MENOR cantidad de aristas, como la
 // secuencia de vértices por los que pasa: el primero es v y el último es w.
 // Si v == w, es {v}. Si w no es alcanzable desde v, devuelve un vector vacío.
@@ -261,7 +274,7 @@ std::vector<size_t> distanciasDesde(const Grafo& g, size_t v);
 // Complejidad: O(n + m).
 std::vector<size_t> caminoMasCorto(const Grafo& g, size_t v, size_t w);
 
-// Ejercicio 21 — Vértices a distancia k
+// Ejercicio 22 — Vértices a distancia k
 // Devuelve los vértices cuya distancia mínima a v es EXACTAMENTE k, en orden
 // creciente. (Con k = 0, es {v}.)
 // Ejemplo (grafo del DFS de la teórica): desde 0, con k = 3 -> {3, 4, 7}.

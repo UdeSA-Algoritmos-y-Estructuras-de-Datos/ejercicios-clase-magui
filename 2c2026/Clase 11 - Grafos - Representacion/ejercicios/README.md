@@ -127,12 +127,13 @@ No hace falta buscar si la arista ya estaba: para eso está la precondición.
 - **cumpleInvariante**: chequear el invariante de representación de arriba.
 - **gradosDeEntrada**: en un grafo **dirigido** con listas, calcular `d_in` de todos los vértices con una sola pasada, O(n + m).
 
-### Parte 3 — Alcanzabilidad y DFS (Ej. 12 al 17)
+### Parte 3 — Alcanzabilidad y DFS (Ej. 12 al 18)
 
 - **esAlcanzableDFS**: el algoritmo de la teórica, tal cual: una **pila** de pendientes que arranca con `v`, un arreglo de **visitados**, y el ciclo "sacar el tope, ¿es `w`?, ¿ya lo visité?, si no, marcarlo y apilar a los vecinos no visitados".
 - **ordenDeVisitaDFS**: el mismo recorrido, devolviendo el orden en que se marcan los visitados. Tiene que reproducir la **tabla del ejemplo de la teórica** (desde 0: `0, 5, 6, 7, 4, 2, 3, 1`).
 - **cantidadDeComponentes**, **esConexo**, **esArbol**: se construyen sobre el recorrido (lanzarlo desde cada vértice sin visitar) y sobre la caracterización "árbol = conexo con exactamente n - 1 aristas".
 - **esBipartito**: el 2-coloreo de la teórica, con una pila. Tiene que andar también si el grafo **no es conexo**.
+- **hayCicloDesde**: ¿hay un ciclo en la componente de `v`? Pensá qué significa que un vértice aparezca **repetido** en la pila del DFS (¿puede pasar en un árbol?).
 
 Para la pila alcanza con la de la STL:
 
@@ -146,7 +147,7 @@ pila.pop();         // sacar el tope (no devuelve nada)
 pila.empty();       // ¿está vacía?
 ```
 
-### Parte 4 — BFS (Ej. 18 al 21)
+### Parte 4 — BFS (Ej. 19 al 22)
 
 Es el mismo recorrido que el DFS, pero con una **cola** en lugar de una pila:
 el recorrido avanza **por niveles** (primero el vértice de partida, después sus

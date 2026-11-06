@@ -457,6 +457,7 @@ Una vez que sabemos recorrer todo lo alcanzable desde un vértice, varios proble
 - **Componentes conexas.** Recorrer todos los vértices; cada vez que aparece uno **sin visitar**, es el comienzo de una componente nueva: se lanza el recorrido desde él (eso marca como visitada toda su componente) y se suma uno al contador. Cuesta **O(n + m)** en total, porque los visitados se comparten entre todos los recorridos.
 - **Conexo.** Un grafo (con al menos un vértice) es conexo si y sólo si tiene **una única** componente conexa.
 - **¿Es un árbol?** Usando la caracterización: es conexo **y** tiene exactamente `n - 1` aristas. La cantidad de aristas sale de la propiedad de los grados: `m` es la suma de los grados dividida por 2.
+- **¿Hay un ciclo?** (en la componente del vértice de partida). En un **árbol**, cada vértice se apila **una sola vez**: lo apila su padre, que es el único vecino que ya fue visitado cuando le toca. Entonces, si al sacar un vértice de la pila **ya estaba visitado**, es porque alguien más también lo apiló: hay un ciclo. Es la misma "repetición" de la que hablamos antes, vista como una señal. Otra forma es llevar la cuenta de quién es el **padre** de cada vértice y buscar un vecino ya visitado que **no** sea el padre (el padre sí es un vecino visitado, pero esa es la arista por la que llegamos, no un ciclo). Y una tercera, por conteo: una componente con `k` vértices es un árbol si tiene exactamente `k - 1` aristas, así que con `k` o más aristas hay un ciclo.
 - **¿Es bipartito?** El 2-coloreo de la sección anterior se hace con el mismo esquema: una pila, y en vez de "marcar como visitado" se **pinta** al vecino del color contrario al del vértice actual. Si un vecino ya está pintado del **mismo** color, no es bipartito. Como el grafo puede no ser conexo, hay que repetirlo desde cada vértice todavía sin pintar.
 
 > Pregunta para pensar: ¿por qué esos problemas no necesitan guardar el camino ni la distancia? ¿Qué información extra necesitaríamos si quisiéramos devolver **un** camino de `v` a `w`, y no sólo si existe?
@@ -544,6 +545,7 @@ En el ejemplo, DFS llegó al 3 pasando por `0, 5, 6, 4, 2, 3` (5 aristas), pero 
 - Para un grafo **ralo**, ¿qué representación conviene? ¿Por qué?
 - ¿Qué operación del TAD es **más barata** con la matriz que con las listas? ¿Y cuáles son más baratas con las listas?
 - En DFS, ¿dónde guardamos los vértices pendientes por visitar? ¿En qué orden salen?
+- ¿Cómo se sabe, con el DFS, si hay un ciclo? ¿Por qué un vértice repetido en la pila es una señal de ciclo?
 - ¿Por qué hace falta marcar los visitados? ¿Por qué hay que revisar, **al sacar** un vértice de la pila, si ya fue visitado?
 - ¿Qué cambia entre DFS y BFS? ¿Por qué en BFS se puede marcar al encolar?
 - ¿Qué recorrido uso para calcular la distancia mínima entre dos vértices de un grafo sin pesos? ¿Y para saber si hay un camino?
@@ -563,5 +565,5 @@ Los ejercicios de esta clase (en la carpeta `ejercicios`) siguen el mismo orden 
 
 - **Parte 1**: el TAD Grafo, operación por operación, con **listas de adyacencia**. La idea es ver con las manos por qué cada operación cuesta lo que cuesta.
 - **Parte 2**: trabajar con la representación: cantidad de aristas a partir de los grados, grafos completos, vecinos en común, chequear el invariante de representación y calcular grados de entrada en un grafo dirigido.
-- **Parte 3**: alcanzabilidad con **DFS** y una pila explícita, y los problemas que se resuelven con ese recorrido: componentes conexas, conexidad, árboles y grafos bipartitos.
+- **Parte 3**: alcanzabilidad con **DFS** y una pila explícita, y los problemas que se resuelven con ese recorrido: componentes conexas, conexidad, árboles, ciclos y grafos bipartitos.
 - **Parte 4**: **BFS** con una cola: orden de visita, distancias mínimas, camino más corto y vértices a distancia `k`.
