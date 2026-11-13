@@ -259,3 +259,14 @@ Otro ejemplo clásico donde greedy falla es la **mochila 0/1** (elegir objetos e
 | Ejemplos                    | Subconjuntos, permutaciones | N-reinas, Sudoku, coloreo de grafos | Kruskal, Prim, Dijkstra, cambio de monedas (sistema estándar) |
 
 > En resumen: **fuerza bruta** prueba todo, **backtracking** prueba todo lo que "vale la pena" probar (podando lo demás), y **greedy** ni siquiera prueba: decide y sigue, apostando a que la suma de decisiones locales da el óptimo global. Elegir cuál usar depende de si podemos demostrar (o no) que la decisión greedy siempre es segura.
+
+---
+
+# Sobre los ejercicios
+
+Los ejercicios de esta clase (en la carpeta `ejercicios`) siguen el orden de la teórica, con el mismo pseudocódigo del handout.
+
+- **Parte 1 — Fuerza bruta y enumeraciones**: averiguar un PIN probando todos los candidatos, y generar **variaciones**, **permutaciones**, **combinaciones** y **subconjuntos**.
+- **Parte 2 — Backtracking**: el **laberinto** (con el hilo), el **sudoku** (con su poda) y la **suma de subconjuntos**.
+- **Parte 3 — Greedy**: la **selección de actividades** (un greedy que funciona) y el **vuelto** (un greedy que falla, y el backtracking que sí llega al óptimo).
+- **Parte 4 — Opcionales**: cuántas aulas hacen falta para todas las actividades, y el laberinto sin deshacer.
